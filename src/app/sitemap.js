@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabaseClient'
-
 export default async function sitemap() {
     const baseUrl = 'https://johan-swimming-club.vercel.app'
 
