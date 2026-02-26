@@ -33,15 +33,17 @@ export default function AddMemberModal({ isOpen, onClose, onSuccess }) {
 
             const { error: profileError } = await supabase
                 .from('profiles')
-                .update({
+                .upsert({
+                    id: data.user.id,
+                    full_name: formData.name,
                     status: 'active',
                     email: formData.email,
                     telepon: formData.phone,
                     birth_date: formData.birth_date,
                     gender: formData.gender,
-                    program_pilihan: formData.program
+                    program_pilihan: formData.program,
+                    role: 'member'
                 })
-                .eq('id', data.user.id)
 
             if (profileError) console.warn('Profile update error:', profileError)
 

@@ -26,14 +26,32 @@ export default function RecentMembers() {
             }
         }
         fetchRecentMembers()
+
+        // Real-time subscription for new members
+        const channel = supabase
+            .channel('recent-members-changes')
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'profiles', filter: 'role=eq.member' },
+                (payload) => {
+                    console.log('New member detected:', payload.new)
+                    setMembers(prev => [payload.new, ...prev.slice(0, 4)])
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }, [])
 
     return (
         <div className="bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700 p-6 shadow-xl h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-white font-black text-sm uppercase tracking-[0.2em] flex items-center gap-2">
-                    <div className="w-2 h-4 bg-emerald-600 rounded-full"></div>
-                    Anggota Baru
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-4 bg-emerald-600 rounded-full animate-pulse"></div>
+                        <span>Anggota Baru</span>
+                    </div>
                 </h3>
                 <Link href="/admin/members" className="text-[10px] text-blue-400 font-bold uppercase tracking-widest hover:text-blue-300 transition-colors flex items-center gap-1">
                     Semua <ArrowRight size={12} />

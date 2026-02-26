@@ -105,14 +105,17 @@ export default function MemberModal() {
             if (!data?.user) throw new Error('Gagal membuat akun. Silakan coba lagi.')
 
             // Sync profile role
-            await supabase.from('profiles').update({
+            await supabase.from('profiles').upsert({
+                id: data.user.id,
                 role: regRole,
                 email: regEmail,
+                full_name: regName,
                 telepon: regPhone,
                 birth_date: regBirthDate,
                 gender: regGender,
-                program_pilihan: regProgram
-            }).eq('id', data.user.id)
+                program_pilihan: regProgram,
+                status: 'pending' // Ensure new registrations are pending
+            })
 
             const adminPhone = '6285269062216'
             const waMessage = encodeURIComponent(`Halo Admin, murid baru mendaftar.\n\nNama: ${regName}\nRole: ${regRole.toUpperCase()}\nEmail: ${regEmail}`)
