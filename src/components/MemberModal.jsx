@@ -109,7 +109,7 @@ export default function MemberModal() {
             }).eq('id', data.user.id)
 
             const adminPhone = '6285269062216'
-            const waMessage = encodeURIComponent(`Halo Admin, murid baru mendaftar.\n\nNama: ${regName}\nRole: ${regRole.toUpperCase()}\nEmail: ${regEmail}`)
+            const waMessage = encodeURIComponent(`Halo Admin, akun baru mendaftar.\n\nNama: ${regName}\nRole: ${regRole.toUpperCase()}\nEmail: ${regEmail}`)
             const waUrl = `https://wa.me/${adminPhone}?text=${waMessage}`
 
             setSuccessData({ waUrl })
@@ -273,4 +273,5 @@ export default function MemberModal() {
         </div>
     )
 }
+
 
