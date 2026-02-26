@@ -20,12 +20,16 @@ export default function CoachGuard({ children }) {
 
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, status')
                     .eq('id', session.user.id)
                     .single()
 
                 if (profileError || profile?.role !== 'coach') {
                     throw new Error('Not authorized as coach')
+                }
+
+                if ((profile?.status || '').toLowerCase() !== 'active') {
+                    throw new Error('Account not active')
                 }
 
                 setAuthorized(true)

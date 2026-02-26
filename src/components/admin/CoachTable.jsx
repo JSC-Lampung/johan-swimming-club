@@ -51,6 +51,37 @@ export default function CoachTable() {
         setResettingUser(user)
     }
 
+    const deleteUser = async (id, name) => {
+        if (!confirm(`PERINGATAN: Menghapus Pelatih "${name}" akan menghapus SELURUH data terkait (laporan, absensi pelatih, dan absensi murid yang pernah diinput). Tindakan ini tidak dapat dibatalkan.\n\nApakah Anda yakin?`)) return
+
+        setLoading(true)
+        try {
+            // 1. Clean up coach_attendance
+            await supabase.from('coach_attendance').delete().eq('coach_id', id)
+
+            // 2. Clean up coach_reports
+            await supabase.from('coach_reports').delete().eq('coach_id', id)
+
+            // 3. Clean up instruction_reads
+            await supabase.from('instruction_reads').delete().eq('coach_id', id)
+
+            // 4. Clean up member_attendance records entered by this coach
+            await supabase.from('member_attendance').delete().eq('coach_id', id)
+
+            // 5. Finally delete from profiles
+            const { error } = await supabase.from('profiles').delete().eq('id', id)
+
+            if (error) throw error
+
+            alert(`Berhasil menghapus pelatih: ${name}`)
+            fetchCoaches()
+        } catch (err) {
+            console.error('Delete error:', err)
+            alert('Gagal menghapus pelatih: ' + (err.message || 'Terjadi kesalahan saat menghapus data.'))
+            setLoading(false)
+        }
+    }
+
     if (loading) return <div className="p-8 text-center text-slate-400">Loading coaches...</div>
 
     return (

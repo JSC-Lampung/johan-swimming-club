@@ -62,11 +62,17 @@ export default function MemberModal() {
 
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, status')
                 .eq('id', user.id)
                 .single()
 
             if (profileError) throw new Error('Data profile tidak ditemukan.')
+
+            // Check if account is active (ignore this for admin)
+            if (profile.role !== 'admin' && (profile.status || '').toLowerCase() !== 'active') {
+                await supabase.auth.signOut()
+                throw new Error('Akun Anda belum aktif / sedang diblokir. Mohon hubungi Admin untuk aktivasi.')
+            }
 
             // Clear state before redirect
             setLoginEmail('')
@@ -109,7 +115,7 @@ export default function MemberModal() {
             }).eq('id', data.user.id)
 
             const adminPhone = '6285269062216'
-            const waMessage = encodeURIComponent(`Halo Admin, akun baru mendaftar.\n\nNama: ${regName}\nRole: ${regRole.toUpperCase()}\nEmail: ${regEmail}`)
+            const waMessage = encodeURIComponent(`Halo Admin, murid baru mendaftar.\n\nNama: ${regName}\nRole: ${regRole.toUpperCase()}\nEmail: ${regEmail}`)
             const waUrl = `https://wa.me/${adminPhone}?text=${waMessage}`
 
             setSuccessData({ waUrl })
@@ -273,5 +279,3 @@ export default function MemberModal() {
         </div>
     )
 }
-
-

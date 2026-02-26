@@ -8,6 +8,7 @@ const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-display' }
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' })
 
 export const metadata = {
+  metadataBase: new URL('https://johan-swimming-club.vercel.app'),
   title: 'Johan Swimming Club | Membangun Generasi Juara',
   description: 'Klub renang profesional dengan pelatih bersertifikasi di Indonesia. Program latihan lengkap untuk pemula hingga atlet prestasi.',
   keywords: ['klub renang', 'kursus renang', 'pelatih renang profesional', 'berenang anak', 'atlet renang', 'johan swimming club'],

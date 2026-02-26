@@ -51,6 +51,34 @@ export default function MemberTable() {
         setResettingUser(user)
     }
 
+    const deleteUser = async (id, name) => {
+        if (!confirm(`PERINGATAN: Menghapus "${name}" akan menghapus SELURUH data terkait (absensi, nilai, dll). Tindakan ini tidak dapat dibatalkan.\n\nApakah Anda yakin?`)) return
+
+        setLoading(true)
+        try {
+            // 1. Clean up member_attendance
+            await supabase.from('member_attendance').delete().eq('member_id', id)
+
+            // 2. Clean up member_assessments
+            await supabase.from('member_assessments').delete().eq('member_id', id)
+
+            // 3. Clean up member_leave_requests
+            await supabase.from('member_leave_requests').delete().eq('member_id', id)
+
+            // 4. Finally delete from profiles
+            const { error } = await supabase.from('profiles').delete().eq('id', id)
+
+            if (error) throw error
+
+            alert(`Berhasil menghapus member: ${name}`)
+            fetchMembers()
+        } catch (err) {
+            console.error('Delete error:', err)
+            alert('Gagal menghapus user: ' + (err.message || 'Terjadi kesalahan saat menghapus data.'))
+            setLoading(false)
+        }
+    }
+
     if (loading) return <div className="p-8 text-center text-slate-400">Loading members...</div>
 
     return (

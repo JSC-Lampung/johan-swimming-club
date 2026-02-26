@@ -19,12 +19,16 @@ export default function MemberGuard({ children }) {
 
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, status')
                     .eq('id', session.user.id)
                     .single()
 
                 if (profileError || profile?.role !== 'member') {
                     throw new Error('Not authorized')
+                }
+
+                if ((profile?.status || '').toLowerCase() !== 'active') {
+                    throw new Error('Account not active')
                 }
 
                 setAuthorized(true)
