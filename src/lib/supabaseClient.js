@@ -36,6 +36,10 @@ const dummy = {
     }
 }
 
+if (!supabaseUrl || !supabaseKey || !supabaseUrl.startsWith('http')) {
+    console.warn('⚠️ Supabase connection details missing or invalid. Using dummy client.')
+}
+
 export const supabase = (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http'))
     ? createClient(supabaseUrl, supabaseKey)
     : dummy

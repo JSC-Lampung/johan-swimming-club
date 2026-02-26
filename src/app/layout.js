@@ -19,11 +19,20 @@ export const metadata = {
     siteName: 'Johan Swimming Club',
     locale: 'id_ID',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Johan Swimming Club Thumbnail',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Johan Swimming Club | Membangun Generasi Juara',
     description: 'Program latihan renang profesional untuk semua usia.',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
