@@ -27,8 +27,8 @@ const dummy = {
         getSession: () => Promise.resolve({ data: { session: null }, error: null }),
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
-        signInWithPassword: () => Promise.resolve({ data: {}, error: null }),
-        signUp: () => Promise.resolve({ data: {}, error: null }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null }, error: null }),
+        signUp: () => Promise.resolve({ data: { user: null }, error: null }),
         signOut: () => Promise.resolve({ error: null }),
     },
     storage: {

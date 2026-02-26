@@ -53,8 +53,12 @@ export default function MemberModal() {
         e.preventDefault()
         setLoading(true)
         try {
-            const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPass })
+            const { data, error: authError } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPass })
+
             if (authError) throw authError
+            if (!data?.user) throw new Error('Email atau password salah atau akun tidak ditemukan.')
+
+            const user = data.user
 
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
@@ -92,6 +96,7 @@ export default function MemberModal() {
             })
 
             if (error) throw error
+            if (!data?.user) throw new Error('Gagal membuat akun. Silakan coba lagi.')
 
             // Sync profile role
             await supabase.from('profiles').update({
