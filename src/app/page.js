@@ -8,11 +8,18 @@ import Link from 'next/link'
 export const revalidate = 60 // Revalidate every minute
 
 export default async function Home() {
-  const { data: contents } = await supabase.from('landing_contents').select('*').eq('is_active', true).order('order_index', { ascending: true }) || { data: [] }
-  const { data: siteConfig } = await supabase.from('landing_contents').select('*').eq('category', 'site_config') || { data: [] }
+  // Safe data fetching to prevent build crashes if supabase is not initialized
+  const { data: contents } = supabase
+    ? await supabase.from('landing_contents').select('*').eq('is_active', true).order('order_index', { ascending: true })
+    : { data: [] }
 
-  // Fetch dynamic categories
-  let { data: categories } = await supabase.from('content_categories').select('*').order('order_index', { ascending: true }) || { data: [] }
+  const { data: siteConfig } = supabase
+    ? await supabase.from('landing_contents').select('*').eq('category', 'site_config')
+    : { data: [] }
+
+  let { data: categories } = supabase
+    ? await supabase.from('content_categories').select('*').order('order_index', { ascending: true })
+    : { data: [] }
 
   // Fallback categories if table is empty or doesn't exist
   if (!categories || categories.length === 0) {

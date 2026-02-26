@@ -14,6 +14,10 @@ export default function ActivityCarousel() {
 
     useEffect(() => {
         const fetchSlides = async () => {
+            if (!supabase) {
+                setLoading(false)
+                return
+            }
             const { data, error } = await supabase
                 .from('hero_slides')
                 .select('image_url')
