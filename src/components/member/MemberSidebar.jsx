@@ -7,7 +7,8 @@ import {
     LogOut,
     Menu,
     X,
-    Shield
+    Shield,
+    Mail
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useState, useEffect } from 'react'
