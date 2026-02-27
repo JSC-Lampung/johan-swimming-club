@@ -263,14 +263,14 @@ export default function MemberDashboard() {
                                     <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Pesan Khusus Pelatih</p>
                                 </div>
                                 <div className="bg-slate-900/50 p-5 rounded-2xl border border-amber-500/10 italic text-slate-300 text-sm leading-relaxed relative quote-bg">
-                                    "{latestAssessment.notes}"
+                                    &quot;{latestAssessment.notes}&quot;
                                 </div>
                             </div>
                         )}
 
                         {!latestAssessment?.notes && (
                             <div className="mt-6 p-4 rounded-2xl bg-blue-600/5 border border-blue-600/10 italic text-blue-400 text-xs text-center font-medium">
-                                "Juara tidak dilahirkan, mereka dibentuk melalui latihan setiap hari."
+                                &quot;Juara tidak dilahirkan, mereka dibentuk melalui latihan setiap hari.&quot;
                             </div>
                         )}
                     </div>

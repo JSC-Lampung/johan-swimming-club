@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useUI } from '@/context/UIContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useSettings } from '@/context/SettingsContext'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function MemberModal() {
     const { isMemberModalOpen, initialTab, closeMemberModal } = useUI()
@@ -44,6 +45,9 @@ export default function MemberModal() {
     const [regPass, setRegPass] = useState('')
     const [regRole, setRegRole] = useState('member')
     const [regProgram, setRegProgram] = useState('')
+
+    const [showLoginPass, setShowLoginPass] = useState(false)
+    const [showRegPass, setShowRegPass] = useState(false)
 
     const router = useRouter()
 
@@ -200,8 +204,21 @@ export default function MemberModal() {
                                         <div className="space-y-2">
                                             <label className="text-sm font-bold text-slate-700 ml-1">Kata Sandi</label>
                                             <div className="relative group">
-                                                <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} required
-                                                    className="w-full pl-4 pr-3 py-3 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none text-slate-900 font-medium" placeholder="••••••••" />
+                                                <input
+                                                    type={showLoginPass ? "text" : "password"}
+                                                    value={loginPass}
+                                                    onChange={e => setLoginPass(e.target.value)}
+                                                    required
+                                                    className="w-full pl-4 pr-12 py-3 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all outline-none text-slate-900 font-medium"
+                                                    placeholder="••••••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowLoginPass(!showLoginPass)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {showLoginPass ? <Eye size={18} /> : <EyeOff size={18} />}
+                                                </button>
                                             </div>
                                         </div>
                                         <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg hover:shadow-blue-500/40 transition-all disabled:opacity-70">
@@ -253,7 +270,23 @@ export default function MemberModal() {
                                             </select>
                                         )}
 
-                                        <input type="password" value={regPass} onChange={e => setRegPass(e.target.value)} required placeholder="Kata Sandi Baru" className="w-full p-3 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                                        <div className="relative group">
+                                            <input
+                                                type={showRegPass ? "text" : "password"}
+                                                value={regPass}
+                                                onChange={e => setRegPass(e.target.value)}
+                                                required
+                                                placeholder="Kata Sandi Baru"
+                                                className="w-full p-3 pr-12 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowRegPass(!showRegPass)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                {showRegPass ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
 
                                         <button type="submit" disabled={loading} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg mt-1 disabled:opacity-70">
                                             {loading ? 'Memproses...' : 'Daftar Sekarang'}

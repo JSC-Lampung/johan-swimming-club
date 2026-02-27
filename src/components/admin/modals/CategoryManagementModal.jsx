@@ -24,7 +24,10 @@ export default function CategoryManagementModal({ isOpen, onClose, onSuccess }) 
     }
 
     useEffect(() => {
-        if (isOpen) fetchCategories()
+        if (isOpen) {
+            fetchCategories()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
     const handleAdd = async (e) => {

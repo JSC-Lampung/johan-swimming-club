@@ -189,7 +189,7 @@ export default function MemberLeavePage() {
                                                     {req.status === 'read' ? 'Dilihat Pelatih' : 'Pending'}
                                                 </span>
                                             </div>
-                                            <p className="text-slate-400 text-sm font-medium line-clamp-2 italic italic">"{req.reason}"</p>
+                                            <p className="text-slate-400 text-sm font-medium line-clamp-2 italic italic">&quot;{req.reason}&quot;</p>
                                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest pt-1">
                                                 Dikirim: {new Date(req.created_at).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </p>

@@ -185,7 +185,7 @@ export default function MemberProgressPage() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 italic">Catatan Pelatih:</p>
-                                        <p className="text-slate-300 text-sm font-medium leading-relaxed italic">"{item.notes}"</p>
+                                        <p className="text-slate-300 text-sm font-medium leading-relaxed italic">&quot;{item.notes}&quot;</p>
                                     </div>
                                 </div>
                             )}

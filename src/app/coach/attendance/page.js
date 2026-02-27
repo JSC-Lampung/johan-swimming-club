@@ -521,7 +521,7 @@ export default function MemberAttendancePage() {
                     </div>
                     <div>
                         <h4 className="text-white font-black text-sm uppercase tracking-widest italic">Ingat Simpan Data</h4>
-                        <p className="text-slate-400 text-xs font-medium">Jangan lupa klik tombol <strong className="text-blue-400">"Simpan"</strong> di atas sebelum meninggalkan halaman ini.</p>
+                        <p className="text-slate-400 text-xs font-medium">Jangan lupa klik tombol <strong className="text-blue-400">&quot;Simpan&quot;</strong> di atas sebelum meninggalkan halaman ini.</p>
                     </div>
                 </div>
             </div>

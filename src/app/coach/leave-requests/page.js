@@ -145,7 +145,7 @@ export default function CoachLeaveRequestsPage() {
 
                                 <div className="space-y-1">
                                     <p className="text-slate-300 font-bold text-base leading-relaxed italic">
-                                        "{req.reason}"
+                                        &quot;{req.reason}&quot;
                                     </p>
                                     <div className="flex items-center gap-4 pt-1">
                                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">

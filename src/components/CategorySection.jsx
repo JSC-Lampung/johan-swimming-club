@@ -44,7 +44,7 @@ export default function CategorySection({ categories = [] }) {
                             <Link
                                 key={cat.id}
                                 href={`/content?category=${cat.slug}`}
-                                className={`group relative bg-white rounded-[3rem] p-10 border border-slate-200/60 shadow-xl shadow-slate-200/50 ${color.shadow} transition-all duration-500 hover:-translate-y-4 active:animate-bounce-soft flex flex-col`}
+                                className={`group relative bg-white rounded-[3rem] p-10 border border-slate-200/60 shadow-xl shadow-slate-200/50 ${color.shadow} transition-all duration-500 hover:-translate-y-4 hover:animate-bounce-soft active:animate-bounce-soft flex flex-col`}
                             >
                                 <div className="mb-8 flex justify-between items-start">
                                     <div className={`w-14 h-14 rounded-2xl ${color.bg} ${color.text} flex items-center justify-center ${color.iconBg} group-hover:text-white transition-all duration-500 shadow-sm`}>
@@ -66,6 +66,6 @@ export default function CategorySection({ categories = [] }) {
                     })}
                 </div>
             </div>
-        </section>
+        </section >
     )
 }

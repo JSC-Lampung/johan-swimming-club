@@ -24,7 +24,7 @@ export default function HeroSection({ clubSlogan, heroIntro }) {
                     <div className="flex flex-wrap gap-4 pt-2">
                         <button
                             onClick={() => openMemberModal('register')}
-                            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-xl hover:-translate-y-1 active:scale-95"
+                            className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-xl hover:-translate-y-2 hover:animate-bounce-soft active:scale-95"
                         >
                             Mulai Sekarang
                         </button>

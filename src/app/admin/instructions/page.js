@@ -231,7 +231,7 @@ export default function AdminInstructionsPage() {
                                     </button>
                                 </div>
                                 <h3 className="text-white font-black text-sm mb-2 uppercase tracking-tight">{inst.title}</h3>
-                                <p className="text-slate-400 text-xs font-medium leading-relaxed mb-4 line-clamp-3 italic">"{inst.content}"</p>
+                                <p className="text-slate-400 text-xs font-medium leading-relaxed mb-4 line-clamp-3 italic">&quot;{inst.content}&quot;</p>
                                 <div className="flex items-center gap-2 text-[8px] text-slate-500 font-black uppercase tracking-widest mt-auto">
                                     <Layout size={10} />
                                     {new Date(inst.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}

@@ -187,7 +187,7 @@ export default function AdminInstructionNotification() {
                                         <h4 className="text-white font-black text-xs uppercase truncate pr-4">{inst.title}</h4>
                                         {!inst.is_read && <div className="w-2 h-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50 shrink-0"></div>}
                                     </div>
-                                    <p className="text-slate-400 text-[10px] font-medium line-clamp-2 italic">"{inst.content}"</p>
+                                    <p className="text-slate-400 text-[10px] font-medium line-clamp-2 italic">&quot;{inst.content}&quot;</p>
                                     <div className="flex items-center gap-2 mt-3 text-[8px] font-black text-slate-500 uppercase tracking-widest">
                                         <Calendar size={10} />
                                         {new Date(inst.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
@@ -217,7 +217,7 @@ export default function AdminInstructionNotification() {
                             </div>
 
                             <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50">
-                                <p className="text-slate-300 text-sm leading-relaxed font-medium italic">"{selectedMessage.content}"</p>
+                                <p className="text-slate-300 text-sm leading-relaxed font-medium italic">&quot;{selectedMessage.content}&quot;</p>
                             </div>
 
                             <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
