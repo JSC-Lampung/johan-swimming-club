@@ -1,6 +1,6 @@
 
 'use server'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabaseClient'
 
 export async function resetUserPasswordAdmin(userId, newPassword) {
     try {

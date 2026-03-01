@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin as supabase } from '@/lib/supabaseClient'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HeroSection from '@/components/HeroSection'

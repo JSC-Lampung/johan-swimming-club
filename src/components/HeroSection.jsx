@@ -1,7 +1,7 @@
-
 'use client'
 import { useUI } from '@/context/UIContext'
 import ActivityCarousel from './ActivityCarousel'
+import Image from 'next/image'
 
 export default function HeroSection({ clubSlogan, heroIntro }) {
     const { openMemberModal } = useUI()
@@ -30,8 +30,13 @@ export default function HeroSection({ clubSlogan, heroIntro }) {
                         </button>
                         <div className="flex -space-x-3 items-center ml-4">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className={`w-10 h-10 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 overflow-hidden`}>
-                                    <img src={`https://i.pravatar.cc/100?u=${i}`} alt={`Member Johan Swimming Club ${i}`} />
+                                <div key={i} className={`w-10 h-10 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 overflow-hidden relative`}>
+                                    <Image
+                                        src={`https://i.pravatar.cc/100?u=${i}`}
+                                        alt={`Member Johan Swimming Club ${i}`}
+                                        fill
+                                        className="object-cover"
+                                    />
                                 </div>
                             ))}
                             <span className="ml-6 text-sm font-semibold text-slate-500">500+ Member Aktif</span>

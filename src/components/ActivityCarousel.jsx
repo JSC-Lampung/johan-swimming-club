@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import Image from 'next/image'
 
 
 export default function ActivityCarousel() {
@@ -50,10 +51,13 @@ export default function ActivityCarousel() {
                         key={idx}
                         className={`absolute inset-0 transition-all duration-1000 ease-in-out transform ${idx === currentIndex ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-110 -rotate-1'}`}
                     >
-                        <img
+                        <Image
                             src={img}
                             alt={`Aktivitas Latihan Johan Swimming Club - Slide ${idx + 1}`}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            priority={idx === 0}
+                            sizes="(max-width: 1024px) 100vw, 800px"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
                     </div>

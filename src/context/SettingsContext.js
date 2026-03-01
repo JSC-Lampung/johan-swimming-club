@@ -1,9 +1,16 @@
-
 'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
-const SettingsContext = createContext()
+const SettingsContext = createContext({
+    settings: {
+        club_name: 'Johan Swimming Club',
+        club_slogan: 'Membangun Generasi Juara Melalui Olahraga Renang',
+        club_logo: '',
+    },
+    loading: false,
+    refreshSettings: () => { }
+})
 
 export function SettingsProvider({ children }) {
     const [settings, setSettings] = useState({

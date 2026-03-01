@@ -1,8 +1,35 @@
-
-import { supabase } from '@/lib/supabaseClient'
+import { supabaseAdmin as supabase } from '@/lib/supabaseClient'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import Image from 'next/image'
+import ShareButton from '@/components/ShareButton'
+
+export const revalidate = 3600 // Revalidate every hour
+
+export async function generateMetadata({ params }) {
+    const { id } = await params
+    const { data: item } = await supabase.from('landing_contents').select('title, content, image_url').eq('id', id).single()
+
+    if (!item) return { title: 'Johan Swimming Club' }
+
+    return {
+        title: `${item.title} | Johan Swimming Club`,
+        description: item.content?.substring(0, 160),
+        openGraph: {
+            title: item.title,
+            description: item.content?.substring(0, 160),
+            images: item.image_url ? [{ url: item.image_url }] : [],
+            type: 'article',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: item.title,
+            description: item.content?.substring(0, 160),
+            images: item.image_url ? [item.image_url] : [],
+        },
+    }
+}
 
 export default async function ContentDetailPage({ params }) {
     const { id } = await params
@@ -37,7 +64,14 @@ export default async function ContentDetailPage({ params }) {
                     <article className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-xl">
                         {item.image_url && (
                             <div className="w-full h-64 md:h-[450px] relative">
-                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                                <Image
+                                    src={item.image_url}
+                                    alt={item.title}
+                                    fill
+                                    priority
+                                    className="object-cover"
+                                    sizes="(max-width: 1024px) 100vw, 896px"
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                                 <div className="absolute top-8 left-8">
                                     <span className="px-5 py-2 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
@@ -79,9 +113,16 @@ export default async function ContentDetailPage({ params }) {
                                         <p className="text-sm font-bold text-slate-900">Admin Johan Swimming</p>
                                     </div>
                                 </div>
-                                <Link href="#contact" className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all text-center">
-                                    Daftar / Hubungi Kami
-                                </Link>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <ShareButton
+                                        title={item.title}
+                                        text={item.content?.substring(0, 100)}
+                                        className="py-3 px-6 rounded-2xl"
+                                    />
+                                    <Link href="#contact" className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all text-center">
+                                        Daftar / Hubungi Kami
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </article>
