@@ -119,10 +119,15 @@ if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
 
 // Debug log for server-side terminal to identify connection mode
 if (typeof window === 'undefined') {
-    if (!supabaseServiceKey) {
-        console.error('❌ [SUPABASE] SUPABASE_SERVICE_ROLE_KEY is MISSING in environment variables!');
+    console.log('🛠️ [DIAGNOSTICS] Checking Environment Variables:');
+    console.log('  - URL:', supabaseUrl ? '✅ Found' : '❌ MISSING (NEXT_PUBLIC_SUPABASE_URL)');
+    console.log('  - Anon Key:', supabaseKey ? '✅ Found' : '❌ MISSING (NEXT_PUBLIC_SUPABASE_ANON_KEY)');
+    console.log('  - Service Key:', supabaseServiceKey ? '✅ Found' : '❌ MISSING (SUPABASE_SERVICE_ROLE_KEY)');
+
+    if (!supabaseUrl || !supabaseKey || !supabaseServiceKey) {
+        console.error('❌ [SUPABASE] Integration incomplete. Check hosting environment variables.');
     } else {
-        console.log('✅ [SUPABASE] Admin Client initialized successfully.');
+        console.log('✅ [SUPABASE] All core variables detected.');
     }
 }
 
