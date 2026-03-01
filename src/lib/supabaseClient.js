@@ -119,16 +119,17 @@ if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
 
 // Debug log for server-side terminal to identify connection mode
 if (typeof window === 'undefined') {
-    console.log('🛠️ [DIAGNOSTICS] Checking Environment Variables:');
-    console.log('  - URL:', supabaseUrl ? '✅ Found' : '❌ MISSING (NEXT_PUBLIC_SUPABASE_URL)');
-    console.log('  - Anon Key:', supabaseKey ? '✅ Found' : '❌ MISSING (NEXT_PUBLIC_SUPABASE_ANON_KEY)');
-    console.log('  - Service Key:', supabaseServiceKey ? '✅ Found' : '❌ MISSING (SUPABASE_SERVICE_ROLE_KEY)');
+    console.log('\n***************************************************');
+    console.log('� [SUPABASE STARTUP DIAGNOSTICS]');
+    console.log('URL:         ', supabaseUrl ? `✅ DETECTED (${supabaseUrl.substring(0, 15)}...)` : '❌ MISSING (NEXT_PUBLIC_SUPABASE_URL)');
+    console.log('Anon Key:    ', supabaseKey ? '✅ DETECTED' : '❌ MISSING (NEXT_PUBLIC_SUPABASE_ANON_KEY)');
+    console.log('Service Key: ', supabaseServiceKey ? '✅ DETECTED' : '❌ MISSING (SUPABASE_SERVICE_ROLE_KEY)');
 
     if (!supabaseUrl || !supabaseKey || !supabaseServiceKey) {
-        console.error('❌ [SUPABASE] Integration incomplete. Check hosting environment variables.');
-    } else {
-        console.log('✅ [SUPABASE] All core variables detected.');
+        console.error('⚠️ CRITICAL: Web app will NOT be able to fetch data!');
+        console.log('SUGGESTION: Please ensure these variables are set in your HOSTING DASHBOARD.');
     }
+    console.log('***************************************************\n');
 }
 
 export const supabase = (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http'))
