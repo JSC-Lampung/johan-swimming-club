@@ -117,6 +117,15 @@ if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
     console.warn('⚠️ Supabase connection URL missing or invalid.')
 }
 
+// Debug log for server-side terminal to identify connection mode
+if (typeof window === 'undefined') {
+    if (!supabaseServiceKey) {
+        console.error('❌ [SUPABASE] SUPABASE_SERVICE_ROLE_KEY is MISSING in environment variables!');
+    } else {
+        console.log('✅ [SUPABASE] Admin Client initialized successfully.');
+    }
+}
+
 export const supabase = (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http'))
     ? createClient(supabaseUrl, supabaseKey, { global: { fetch: customHTTPSFetch } })
     : dummy
