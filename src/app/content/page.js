@@ -18,7 +18,9 @@ export default async function ContentListPage({ searchParams }) {
     const { data: items, error } = await queryBuilder
 
     if (error) {
-        console.error('Supabase Error:', error.message)
+        console.error('❌ [SUPABASE ERROR]:', error.message, '| Hint:', error.hint);
+    } else {
+        console.log(`✅ [SUPABASE SUCCESS]: Fetched ${items?.length || 0} items for category: ${category || 'all'}`);
     }
     const displayItems = items || []
 
