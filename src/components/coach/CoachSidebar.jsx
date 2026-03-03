@@ -13,7 +13,9 @@ import {
     Menu,
     X,
     UserCircle,
-    Shield
+    Shield,
+    Printer,
+    Trophy
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useSettings } from '@/context/SettingsContext'
@@ -21,6 +23,7 @@ import { useSettings } from '@/context/SettingsContext'
 export default function CoachSidebar() {
     const [isOpen, setIsOpen] = useState(false)
     const [user, setUser] = useState(null)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
     const { settings } = useSettings()
@@ -41,16 +44,24 @@ export default function CoachSidebar() {
     }, [])
 
     const handleLogout = async () => {
-        await supabase.auth.signOut()
-        router.push('/')
+        try {
+            setIsLoggingOut(true)
+            await supabase.auth.signOut()
+            window.location.href = '/'
+        } catch (error) {
+            console.error('Logout error:', error)
+            router.push('/')
+        }
     }
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/coach' },
         { name: 'Daftar Anggota', icon: Users, href: '/coach/members' },
-        { name: 'Presensi Atlet', icon: CalendarCheck, href: '/coach/attendance' },
+        { name: 'Absen & Nilai Harian', icon: CalendarCheck, href: '/coach/attendance' },
+        { name: 'Evaluasi Bulanan', icon: BarChart3, href: '/coach/assessments' },
+        { name: 'Best Time Atlet', icon: Trophy, href: '/coach/best-time' },
         { name: 'Izin Member', icon: FileText, href: '/coach/leave-requests' },
-        { name: 'Penilaian Bulanan', icon: BarChart3, href: '/coach/assessments' },
+        { name: 'Cetak Laporan', icon: Printer, href: '/coach/reports/print' },
         { name: 'Laporan Kegiatan', icon: FileText, href: '/coach/reports' },
         { name: 'Profil Saya', icon: UserCircle, href: '/coach/profile' },
     ]
@@ -86,14 +97,14 @@ export default function CoachSidebar() {
                 <div className="p-6 border-b border-slate-700/50">
                     <Link href="/coach" className="flex items-center gap-3 group/logo">
                         <div className="relative">
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-lg border border-slate-700 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-lg border border-slate-700 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
                                 {settings.club_logo ? (
                                     <img src={settings.club_logo} alt="JSC Logo" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold text-xl">J</div>
                                 )}
                             </div>
-                            <div className="absolute -inset-1 bg-blue-500/20 blur-sm rounded-xl -z-10 group-hover/logo:bg-blue-500/30 transition-colors"></div>
+                            <div className="absolute -inset-1 bg-blue-500/20 blur-sm rounded-full -z-10 group-hover/logo:bg-blue-500/30 transition-colors"></div>
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-white font-black text-sm tracking-tight leading-none uppercase">{settings.club_name || 'JOHAN SWIMMING'}</h1>
@@ -149,10 +160,11 @@ export default function CoachSidebar() {
 
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-bold transition-all duration-200 group"
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-bold transition-all duration-200 group disabled:opacity-50"
                     >
-                        <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-xs">Logout Portal</span>
+                        <LogOut size={18} className={`group-hover:-translate-x-1 transition-transform ${isLoggingOut ? 'animate-pulse' : ''}`} />
+                        <span className="text-xs">{isLoggingOut ? 'Memproses...' : 'Logout Portal'}</span>
                     </button>
                     <div className="mt-4 pb-2 px-2 text-[9px] text-slate-500 text-center font-bold uppercase tracking-widest opacity-40">
                         Johan Swimming Club v1.0

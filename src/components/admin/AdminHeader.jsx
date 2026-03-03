@@ -7,12 +7,19 @@ import { supabase } from '@/lib/supabaseClient'
 
 export default function AdminHeader() {
     const [isOpen, setIsOpen] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
 
     const handleLogout = async () => {
-        await supabase.auth.signOut()
-        router.push('/')
+        try {
+            setIsLoggingOut(true)
+            await supabase.auth.signOut()
+            window.location.href = '/'
+        } catch (error) {
+            console.error('Logout error:', error)
+            router.push('/')
+        }
     }
 
     const links = [
@@ -82,9 +89,13 @@ export default function AdminHeader() {
                             </Link>
                         ))}
                         <div className="pt-2 mt-2 border-t border-slate-700/50">
-                            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-semibold transition-all group">
-                                <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                Logout
+                            <button
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-semibold transition-all group disabled:opacity-50"
+                            >
+                                <svg className={`w-5 h-5 group-hover:rotate-180 transition-transform duration-500 ${isLoggingOut ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                {isLoggingOut ? 'Memproses...' : 'Logout'}
                             </button>
                         </div>
                     </nav>

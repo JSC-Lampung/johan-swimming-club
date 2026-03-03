@@ -331,7 +331,7 @@ export default function CoachProfilePage() {
 
                                 {/* Header Branding - Adjusted spacing */}
                                 <div className="relative z-10 p-6 flex flex-col items-center text-center">
-                                    <div className="w-14 h-14 rounded-2xl bg-white shadow-xl flex items-center justify-center overflow-hidden mb-3 border-2 border-slate-700">
+                                    <div className="w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center overflow-hidden mb-3 border-2 border-slate-700">
                                         {settings.club_logo ? (
                                             <img src={settings.club_logo} alt="JSC Logo" className="w-full h-full object-cover" />
                                         ) : (

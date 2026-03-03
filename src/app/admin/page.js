@@ -1,7 +1,7 @@
 
 import DashboardStats from '@/components/admin/DashboardStats'
 import QuickActions from '@/components/admin/QuickActions'
-import RecentMembers from '@/components/admin/RecentMembers'
+import ActivityHighlight from '@/components/admin/ActivityHighlight'
 import ProgramOverview from '@/components/admin/ProgramOverview'
 
 export default function AdminDashboard() {
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     <QuickActions />
-                    <RecentMembers />
+                    <ActivityHighlight />
                 </div>
                 <div className="lg:col-span-1">
                     <ProgramOverview />

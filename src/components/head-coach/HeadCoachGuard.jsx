@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 
-export default function CoachGuard({ children }) {
+export default function HeadCoachGuard({ children }) {
     const [authorized, setAuthorized] = useState(false)
     const [loading, setLoading] = useState(true)
     const router = useRouter()
@@ -24,11 +24,8 @@ export default function CoachGuard({ children }) {
                     .eq('id', session.user.id)
                     .single()
 
-                const isCoach = profile?.role === 'coach'
-                const isHeadCoach = profile?.role === 'head_coach'
-
-                if (profileError || (!isCoach && !isHeadCoach)) {
-                    throw new Error('Not authorized as coach/head_coach')
+                if (profileError || profile?.role !== 'head_coach') {
+                    throw new Error('Not authorized as head coach')
                 }
 
                 if ((profile?.status || '').toLowerCase() !== 'active') {
@@ -53,7 +50,7 @@ export default function CoachGuard({ children }) {
             <div className="flex h-screen w-full items-center justify-center bg-slate-900">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-400 text-sm font-medium">Memverifikasi akses pelatih...</p>
+                    <p className="text-slate-400 text-sm font-medium">Memverifikasi akses Kepala Pelatih...</p>
                 </div>
             </div>
         )

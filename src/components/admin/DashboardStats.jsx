@@ -34,19 +34,22 @@ export default function DashboardStats() {
                     .select('*', { count: 'exact', head: true })
                     .neq('category', 'site_config')
 
-                // 4. This Month's Assessments
+                // 4. This Month's Coach Reports
                 const now = new Date()
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-                const { count: assessmentCount } = await supabase
-                    .from('member_assessments')
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+                const { count: reportCount } = await supabase
+                    .from('coach_reports')
                     .select('*', { count: 'exact', head: true })
-                    .gte('date', startOfMonth)
+                    .gte('created_at', `${startOfMonth}T00:00:00`)
+                    .lte('created_at', `${endOfMonth}T23:59:59`)
 
                 setStats({
                     members: memberCount || 0,
                     coaches: coachCount || 0,
                     contents: contentCount || 0,
-                    assessments: assessmentCount || 0,
+                    assessments: reportCount || 0,
                     loading: false
                 })
             } catch (error) {
@@ -80,7 +83,7 @@ export default function DashboardStats() {
             color: 'from-purple-600 to-purple-500'
         },
         {
-            title: 'Evaluasi',
+            title: 'Laporan Masuk',
             value: stats.assessments,
             subtitle: 'Bulan Ini',
             icon: BarChart3,

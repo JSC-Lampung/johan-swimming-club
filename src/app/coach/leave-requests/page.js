@@ -29,23 +29,29 @@ export default function CoachLeaveRequestsPage() {
                 .from('member_leave_requests')
                 .select(`
                     *,
-                    member:profiles(id, full_name, avatar_url, program_pilihan)
+                    member:profiles!member_id(id, full_name, avatar_url, program_pilihan)
                 `)
                 .order('created_at', { ascending: false })
 
-            if (error) throw error
-            setRequests(data)
+            if (error) {
+                console.error('Database Error Details:', error)
+                throw error
+            }
+
+            setRequests(data || [])
 
             // Mark unread as read when coach views the list
-            const unreadIds = data.filter(r => r.status === 'pending').map(r => r.id)
-            if (unreadIds.length > 0) {
-                await supabase
-                    .from('member_leave_requests')
-                    .update({ status: 'read' })
-                    .in('id', unreadIds)
+            if (data && data.length > 0) {
+                const unreadIds = data.filter(r => r.status === 'pending').map(r => r.id)
+                if (unreadIds.length > 0) {
+                    await supabase
+                        .from('member_leave_requests')
+                        .update({ status: 'read' })
+                        .in('id', unreadIds)
+                }
             }
         } catch (error) {
-            console.error('Error fetching leave requests:', error)
+            console.error('Error fetching leave requests:', error.message || error)
         } finally {
             setLoading(false)
         }

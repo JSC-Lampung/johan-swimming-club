@@ -1,14 +1,21 @@
+
 'use client'
+
 import {
     LayoutDashboard,
-    TrendingUp,
-    CreditCard,
-    UserCircle,
+    Users,
+    UserCheck,
+    FileText,
+    BarChart3,
     LogOut,
     Menu,
     X,
-    Shield,
-    Mail
+    Trophy,
+    CalendarCheck,
+    Printer,
+    UserCircle,
+    Mail,
+    ScrollText
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { useState, useEffect } from 'react'
@@ -16,7 +23,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSettings } from '@/context/SettingsContext'
 
-export default function MemberSidebar() {
+export default function HeadCoachSidebar() {
     const [isOpen, setIsOpen] = useState(false)
     const [user, setUser] = useState(null)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -26,12 +33,12 @@ export default function MemberSidebar() {
 
     useEffect(() => {
         const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
+            const { data: { user: authUser } } = await supabase.auth.getUser()
+            if (authUser) {
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('*')
-                    .eq('id', user.id)
+                    .eq('id', authUser.id)
                     .single()
                 setUser(profile)
             }
@@ -51,11 +58,17 @@ export default function MemberSidebar() {
     }
 
     const menuItems = [
-        { name: 'Dashboard', icon: LayoutDashboard, href: '/member' },
-        { name: 'Best Time Saya', icon: TrendingUp, href: '/member/best-time' },
-        { name: 'Perkembangan', icon: TrendingUp, href: '/member/progress' },
-        { name: 'Izin Absensi', icon: Mail, href: '/member/leave' },
-        { name: 'Profil Saya', icon: UserCircle, href: '/member/profile' },
+        { name: 'Dashboard', icon: LayoutDashboard, href: '/head-coach' },
+        { name: 'Seluruh Anggota', icon: Users, href: '/head-coach/members' },
+        { name: 'Absen & Nilai Harian', icon: CalendarCheck, href: '/head-coach/attendance' },
+        { name: 'Evaluasi Bulanan', icon: BarChart3, href: '/head-coach/assessments' },
+        { name: 'Best Time Atlet', icon: Trophy, href: '/head-coach/best-time' },
+        { name: 'Sertifikat Level', icon: ScrollText, href: '/head-coach/certificates' },
+        { name: 'Izin Member', icon: Mail, href: '/coach/leave-requests' },
+        { name: 'Laporan Kegiatan', icon: FileText, href: '/head-coach/reports' },
+        { name: 'Cetak Laporan', icon: Printer, href: '/head-coach/reports/print' },
+        { name: 'Instruksi Admin', icon: FileText, href: '/head-coach/instructions' },
+        { name: 'Profil Saya', icon: UserCircle, href: '/head-coach/profile' },
     ]
 
     const toggleSidebar = () => setIsOpen(!isOpen)
@@ -81,15 +94,15 @@ export default function MemberSidebar() {
             {/* Sidebar Container */}
             <aside className={`
                 fixed lg:static inset-y-0 left-0 z-[55]
-                w-72 bg-slate-800 border-r border-slate-700 flex flex-col h-full
+                w-72 bg-slate-900 border-r border-slate-800 flex flex-col h-full
                 transform transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 {/* Brand / Logo Section */}
-                <div className="p-6 border-b border-slate-700/50">
-                    <Link href="/member" className="flex items-center gap-3 group/logo">
+                <div className="p-6 border-b border-white/5">
+                    <Link href="/head-coach" className="flex items-center gap-3 group/logo">
                         <div className="relative">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-lg border border-slate-700 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-lg border border-slate-800 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
                                 {settings.club_logo ? (
                                     <img src={settings.club_logo} alt="JSC Logo" className="w-full h-full object-cover" />
                                 ) : (
@@ -99,8 +112,8 @@ export default function MemberSidebar() {
                             <div className="absolute -inset-1 bg-blue-500/20 blur-sm rounded-full -z-10 group-hover/logo:bg-blue-500/30 transition-colors"></div>
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-white font-black text-sm tracking-tight leading-none uppercase">{settings.club_name || 'JOHAN SWIMMING'}</h1>
-                            <p className="text-blue-400 text-[9px] font-black uppercase tracking-[0.2em] mt-1">Portal Anggota</p>
+                            <h1 className="text-white font-black text-sm tracking-tight leading-none uppercase">{settings.club_name || 'JSC'}</h1>
+                            <p className="text-blue-400 text-[9px] font-black uppercase tracking-[0.2em] mt-1">Kepala Pelatih</p>
                         </div>
                     </Link>
                 </div>
@@ -118,7 +131,7 @@ export default function MemberSidebar() {
                                     flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                                     ${isActive
                                         ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/20'
-                                        : 'text-slate-400 hover:bg-slate-700/50 hover:text-white'}
+                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
                                 `}
                             >
                                 <item.icon size={20} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'} />
@@ -129,21 +142,21 @@ export default function MemberSidebar() {
                 </nav>
 
                 {/* Footer Section (Logout) */}
-                <div className="p-4 border-t border-slate-700 bg-slate-800/80 mt-auto">
+                <div className="p-4 border-t border-white/5 bg-slate-900/50 mt-auto">
                     {/* Integrated Profile Section at bottom */}
-                    <div className="flex items-center gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30 mb-4">
-                        <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 overflow-hidden shadow-inner shrink-0 font-bold">
+                    <div className="flex items-center gap-3 bg-slate-800/40 p-3 rounded-2xl border border-white/5 mb-4">
+                        <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-400 overflow-hidden shadow-inner shrink-0 font-bold">
                             {user?.avatar_url ? (
                                 <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <UserCircle size={18} />
-                            )}
+                                <Trophy size={18} />
+                            ) || <div className="text-xs uppercase">{user?.full_name?.[0] || 'KP'}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h2 className="text-white font-bold text-[11px] truncate whitespace-nowrap">{user?.full_name || 'Anggota JSC'}</h2>
+                            <h2 className="text-white font-bold text-[11px] truncate whitespace-nowrap">{user?.full_name || 'Kepala Pelatih'}</h2>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <p className="text-emerald-400 text-[8px] font-bold uppercase tracking-widest">
+                                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></span>
+                                <p className="text-blue-400 text-[8px] font-bold uppercase tracking-widest">
                                     Online
                                 </p>
                             </div>
@@ -156,10 +169,10 @@ export default function MemberSidebar() {
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-bold transition-all duration-200 group disabled:opacity-50"
                     >
                         <LogOut size={18} className={`group-hover:-translate-x-1 transition-transform ${isLoggingOut ? 'animate-pulse' : ''}`} />
-                        <span className="text-xs">{isLoggingOut ? 'Memproses...' : 'Logout Portal'}</span>
+                        <span className="text-xs">{isLoggingOut ? 'Memproses...' : 'Logout Panel'}</span>
                     </button>
                     <div className="mt-4 pb-2 px-2 text-[9px] text-slate-500 text-center font-bold uppercase tracking-widest opacity-40">
-                        Johan Swimming Club v1.0
+                        JSC Head Coach v1.0
                     </div>
                 </div>
             </aside>

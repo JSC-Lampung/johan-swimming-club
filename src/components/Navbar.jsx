@@ -15,7 +15,7 @@ export default function Navbar() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-4 group">
                     <div className="relative">
-                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden flex items-center justify-center bg-white shadow-xl shadow-blue-500/10 border border-slate-100 group-hover:scale-105 transition-transform duration-500">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-xl shadow-blue-500/10 border border-slate-100 group-hover:scale-110 transition-transform duration-500 flex-shrink-0">
                             {settings.club_logo ? (
                                 <img src={settings.club_logo} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
@@ -27,7 +27,7 @@ export default function Navbar() {
                             )}
                         </div>
                         {/* Decorative background element for the logo */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-[1.25rem] opacity-20 blur-sm group-hover:opacity-40 transition-opacity -z-10"></div>
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full opacity-20 blur-sm group-hover:opacity-40 transition-opacity -z-10"></div>
                     </div>
                     <div className="flex flex-col">
                         <h1 className="font-display text-base md:text-xl font-black text-slate-900 leading-tight tracking-tighter">

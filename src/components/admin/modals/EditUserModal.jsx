@@ -7,7 +7,7 @@ import { updateUserEmailAdmin } from '@/app/actions/authActions'
 export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        name: '', email: '', phone: '', program: '', birth_date: '', gender: '', position: '', avatar: '', status: 'active'
+        name: '', email: '', phone: '', program: '', birth_date: '', gender: '', position: '', avatar: '', status: 'active', role: ''
     })
 
     useEffect(() => {
@@ -21,14 +21,15 @@ export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
                 gender: user.gender || '',
                 position: user.position_title || '',
                 avatar: user.avatar_url || '',
-                status: user.status || 'active'
+                status: user.status || 'active',
+                role: user.role || ''
             })
         }
     }, [user])
 
     if (!isOpen || !user) return null
 
-    const isCoach = user.role === 'coach'
+    const isCoach = formData.role === 'coach' || formData.role === 'head_coach'
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -42,6 +43,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
                 gender: formData.gender,
                 avatar_url: formData.avatar,
                 status: formData.status,
+                role: formData.role,
                 updated_at: new Date().toISOString()
             }
 
@@ -66,7 +68,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
                         fitness: 'Kelas Fitness (Umum)'
                     }
                     const programLabel = programMap[formData.program] || 'Umum'
-                    updates.position_title = `Pelatih ${programLabel}`
+                    updates.position_title = `${formData.role === 'head_coach' ? 'Kepala Pelatih' : 'Pelatih'} ${programLabel}`
                 } else {
                     updates.position_title = formData.position
                 }
@@ -133,14 +135,27 @@ export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-slate-400 text-sm mb-2">Status Akun</label>
-                        <select
-                            value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-                            <option value="active">Aktif (Verified)</option>
-                            <option value="pending">Non-Aktif (Pending)</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-2">Status Akun</label>
+                            <select
+                                value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                                <option value="active">Aktif (Verified)</option>
+                                <option value="pending">Non-Aktif (Pending)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-2">Role User</label>
+                            <select
+                                value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                                <option value="member">Anggota (Atlet)</option>
+                                <option value="coach">Pelatih (Coach)</option>
+                                <option value="head_coach">Kepala Pelatih</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>

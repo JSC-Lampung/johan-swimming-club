@@ -94,6 +94,7 @@ export default function MemberTable() {
                     <table className="w-full text-left text-slate-200">
                         <thead className="border-b border-slate-700 text-slate-400 text-sm">
                             <tr>
+                                <th className="pb-4 font-semibold w-10">No.</th>
                                 <th className="pb-4 font-semibold">Nama Lengkap</th>
                                 <th className="pb-4 font-semibold text-xs">Email</th>
                                 <th className="pb-4 font-semibold">Info</th>
@@ -105,11 +106,12 @@ export default function MemberTable() {
                         </thead>
                         <tbody className="divide-y divide-slate-700/50">
                             {members.length === 0 ? (
-                                <tr><td colSpan="5" className="py-8 text-center text-slate-500">Belum ada anggota.</td></tr>
-                            ) : members.map(m => {
+                                <tr><td colSpan="8" className="py-8 text-center text-slate-500">Belum ada anggota.</td></tr>
+                            ) : members.map((m, index) => {
                                 const isVerified = (m.status || '').toLowerCase() === 'active'
                                 return (
                                     <tr key={m.id} className="hover:bg-slate-700/30 transition-colors">
+                                        <td className="py-4 text-xs font-bold text-slate-500">{index + 1}</td>
                                         <td className="py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-white">{m.full_name || 'Tanpa Nama'}</span>

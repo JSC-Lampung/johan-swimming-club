@@ -10,10 +10,11 @@ import {
     Star,
     ChevronRight,
     Target,
-    CreditCard,
+    Mail,
     UserCircle,
     Zap,
-    Brain
+    Brain,
+    Info
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -26,6 +27,7 @@ export default function MemberDashboard() {
         level: ''
     })
     const [latestAssessment, setLatestAssessment] = useState(null)
+    const [latestDailyNote, setLatestDailyNote] = useState(null)
     const [dynamicTargets, setDynamicTargets] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -70,6 +72,21 @@ export default function MemberDashboard() {
                     .order('date', { ascending: false })
                     .limit(1)
                     .single()
+
+                // Fetch Latest Daily Attendance with Note
+                const { data: dailyNote } = await supabase
+                    .from('member_attendance')
+                    .select('*')
+                    .eq('member_id', authUser.id)
+                    .not('notes', 'is', null)
+                    .neq('notes', '')
+                    .order('date', { ascending: false })
+                    .limit(1)
+                    .single()
+
+                if (dailyNote) {
+                    setLatestDailyNote(dailyNote)
+                }
 
                 if (assessment) {
                     setLatestAssessment(assessment)
@@ -253,26 +270,58 @@ export default function MemberDashboard() {
                             </div>
                         ))}
 
-                        {/* Direct Coach Notes */}
-                        {latestAssessment?.notes && (
-                            <div className="mt-8 pt-8 border-t border-slate-700/50">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
-                                        <Award size={16} />
-                                    </div>
-                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Pesan Khusus Pelatih</p>
-                                </div>
-                                <div className="bg-slate-900/50 p-5 rounded-2xl border border-amber-500/10 italic text-slate-300 text-sm leading-relaxed relative quote-bg">
-                                    &quot;{latestAssessment.notes}&quot;
-                                </div>
-                            </div>
-                        )}
+                        {/* Combined Dynamic Coach Notes (Latest from Monthly or Daily) */}
+                        {(() => {
+                            const hasMonthly = latestAssessment?.notes;
+                            const hasDaily = latestDailyNote?.notes;
 
-                        {!latestAssessment?.notes && (
-                            <div className="mt-6 p-4 rounded-2xl bg-blue-600/5 border border-blue-600/10 italic text-blue-400 text-xs text-center font-medium">
-                                &quot;Juara tidak dilahirkan, mereka dibentuk melalui latihan setiap hari.&quot;
-                            </div>
-                        )}
+                            if (!hasMonthly && !hasDaily) {
+                                return (
+                                    <div className="mt-6 p-4 rounded-2xl bg-blue-600/5 border border-blue-600/10 italic text-blue-400 text-xs text-center font-medium">
+                                        &quot;Juara tidak dilahirkan, mereka dibentuk melalui latihan setiap hari.&quot;
+                                    </div>
+                                );
+                            }
+
+                            // Determine which one is newer
+                            let displayNote = '';
+                            let noteLabel = 'Pesan Khusus Pelatih';
+                            let noteDate = '';
+                            let isDaily = false;
+
+                            const monthlyDate = latestAssessment ? new Date(latestAssessment.date) : new Date(0);
+                            const dailyDate = latestDailyNote ? new Date(latestDailyNote.date) : new Date(0);
+
+                            if (dailyDate >= monthlyDate && hasDaily) {
+                                displayNote = latestDailyNote.notes;
+                                noteLabel = 'Catatan Latihan Terakhir';
+                                noteDate = new Date(latestDailyNote.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                                isDaily = true;
+                            } else if (hasMonthly) {
+                                displayNote = latestAssessment.notes;
+                                noteLabel = 'Evaluasi Bulanan Terakhir';
+                                noteDate = new Date(latestAssessment.date).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                            }
+
+                            return (
+                                <div className="mt-8 pt-8 border-t border-slate-700/50">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-8 h-8 rounded-full ${isDaily ? 'bg-blue-500/20 text-blue-500' : 'bg-amber-500/20 text-amber-500'} flex items-center justify-center`}>
+                                                {isDaily ? <Activity size={16} /> : <Award size={16} />}
+                                            </div>
+                                            <p className={`text-[10px] font-black ${isDaily ? 'text-blue-500' : 'text-amber-500'} uppercase tracking-widest`}>{noteLabel}</p>
+                                        </div>
+                                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-slate-900 px-2 py-0.5 rounded-full border border-slate-700">
+                                            {noteDate}
+                                        </span>
+                                    </div>
+                                    <div className={`bg-slate-900/50 p-5 rounded-2xl border ${isDaily ? 'border-blue-500/10' : 'border-amber-500/10'} italic text-slate-300 text-sm leading-relaxed relative quote-bg group/note hover:border-blue-500/30 transition-colors`}>
+                                        &quot;{displayNote}&quot;
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 
@@ -291,14 +340,14 @@ export default function MemberDashboard() {
                         <ChevronRight className="text-slate-600 group-hover:text-white transition-colors" />
                     </Link>
 
-                    <Link href="/member/id-card" className="flex items-center justify-between p-6 bg-slate-800/50 hover:bg-slate-800 rounded-2xl border border-slate-700 transition-all group">
+                    <Link href="/member/leave" className="flex items-center justify-between p-6 bg-slate-800/50 hover:bg-slate-800 rounded-2xl border border-slate-700 transition-all group">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center">
-                                <CreditCard size={24} />
+                                <Mail size={24} />
                             </div>
                             <div>
-                                <h3 className="text-white font-bold uppercase tracking-tight">Kartu Anggota</h3>
-                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">ID Digital & Barcode Siswa</p>
+                                <h3 className="text-white font-bold uppercase tracking-tight">Izin Absen</h3>
+                                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Kirim Izin Jika Berhalangan Latihan</p>
                             </div>
                         </div>
                         <ChevronRight className="text-slate-600 group-hover:text-white transition-colors" />

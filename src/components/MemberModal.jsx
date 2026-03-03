@@ -85,6 +85,7 @@ export default function MemberModal() {
             closeMemberModal()
             // Redirect based on role
             if (profile.role === 'admin') router.push('/admin')
+            else if (profile.role === 'head_coach') router.push('/head-coach')
             else if (profile.role === 'coach') router.push('/coach')
             else router.push('/member')
 
@@ -156,7 +157,7 @@ export default function MemberModal() {
                                 {/* Logo Section */}
                                 <div className="flex flex-col items-center mb-10 animate-fadeIn">
                                     <div className="relative mb-4">
-                                        <div className="w-20 h-20 rounded-[2rem] overflow-hidden flex items-center justify-center bg-white shadow-2xl shadow-blue-500/20 border border-slate-100 ring-8 ring-slate-50/50">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-2xl shadow-blue-500/20 border border-slate-100 ring-8 ring-slate-50/50">
                                             {settings.club_logo ? (
                                                 <img src={settings.club_logo} alt="Logo" className="w-full h-full object-cover" />
                                             ) : (
@@ -167,7 +168,7 @@ export default function MemberModal() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="absolute -inset-2 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-[2.5rem] opacity-20 blur-md -z-10"></div>
+                                        <div className="absolute -inset-2 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full opacity-20 blur-md -z-10"></div>
                                     </div>
                                     <h2 className="font-display text-xl font-black text-slate-900 tracking-tight text-center leading-tight">
                                         {settings.club_name.split(' ').map((word, i) => (

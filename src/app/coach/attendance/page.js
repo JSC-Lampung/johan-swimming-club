@@ -11,15 +11,14 @@ import {
     UserMinus,
     Stethoscope,
     AlertCircle,
-    Printer,
-    ChevronDown,
     Trophy,
     ShieldCheck,
     Activity,
-    Brain
+    Brain,
+    Filter
 } from 'lucide-react'
 import { useSettings } from '@/context/SettingsContext'
-import AttendancePrint from '@/components/coach/AttendancePrint'
+import { PROGRAMS } from '@/lib/constants'
 
 export default function MemberAttendancePage() {
     const [members, setMembers] = useState([])
@@ -27,18 +26,16 @@ export default function MemberAttendancePage() {
     const [dailyScores, setDailyScores] = useState({}) // { memberId: score }
     const [dailyMetrics, setDailyMetrics] = useState({}) // { memberId: { technique: 0, discipline: 0, physical: 0, mental: 0 } }
     const [coachId, setCoachId] = useState(null)
-    const [program, setProgram] = useState('')
+    const [userRole, setUserRole] = useState('')
+    const [selectedProgram, setSelectedProgram] = useState('')
     const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'))
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [printing, setPrinting] = useState(false)
-    const [showPrintDropdown, setShowPrintDropdown] = useState(false)
-    const [printData, setPrintData] = useState({ members: [], data: {}, period: '', type: '' })
     const { settings } = useSettings()
     const [coachName, setCoachName] = useState('')
 
     useEffect(() => {
-        const init = async () => {
+        const initProfile = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser()
                 if (!user) return
@@ -46,18 +43,43 @@ export default function MemberAttendancePage() {
 
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('full_name, program_pilihan')
+                    .select('full_name, program_pilihan, role')
                     .eq('id', user.id)
                     .single()
-                setProgram(profile?.program_pilihan)
+
+                setUserRole(profile?.role)
                 setCoachName(profile?.full_name)
 
+                // Head Coach defaults to all programs ('')
+                // Regular Coach defaults to their assigned program
+                if (profile?.role === 'head_coach') {
+                    setSelectedProgram('')
+                } else {
+                    setSelectedProgram(profile?.program_pilihan)
+                }
+            } catch (error) {
+                console.error('Error initializing profile:', error)
+            }
+        }
+        initProfile()
+    }, [])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!coachId) return
+            setLoading(true)
+            try {
                 // Fetch members for this program
-                const { data: memberData } = await supabase
+                let memberQuery = supabase
                     .from('profiles')
-                    .select('id, full_name, avatar_url')
+                    .select('id, full_name, avatar_url, program_pilihan')
                     .eq('role', 'member')
-                    .eq('program_pilihan', profile?.program_pilihan)
+
+                if (selectedProgram) {
+                    memberQuery = memberQuery.eq('program_pilihan', selectedProgram)
+                }
+
+                const { data: memberData } = await memberQuery
                     .order('full_name', { ascending: true })
                 setMembers(memberData || [])
 
@@ -65,7 +87,7 @@ export default function MemberAttendancePage() {
                 const { data: attendData } = await supabase
                     .from('member_attendance')
                     .select('member_id, status, daily_score, daily_metrics')
-                    .eq('coach_id', user.id)
+                    .eq('coach_id', coachId)
                     .eq('date', selectedDate)
 
                 const attendMap = {}
@@ -81,13 +103,13 @@ export default function MemberAttendancePage() {
                 setDailyMetrics(metricsMap)
 
             } catch (error) {
-                console.error('Error:', error)
+                console.error('Error fetching attendance:', error)
             } finally {
                 setLoading(false)
             }
         }
-        init()
-    }, [selectedDate])
+        fetchData()
+    }, [selectedDate, selectedProgram, coachId])
 
     const handleStatusChange = (memberId, status) => {
         setAttendance(prev => ({ ...prev, [memberId]: status }))
@@ -131,62 +153,6 @@ export default function MemberAttendancePage() {
         setDailyMetrics(metricsMap)
     }
 
-    const handlePrintPeriod = async (type) => {
-        setPrinting(true)
-        try {
-            const today = new Date(selectedDate)
-            let start, end, periodText
-
-            if (type === 'weekly') {
-                const day = today.getDay()
-                const diff = today.getDate() - day + (day === 0 ? -6 : 1) // Start from Monday
-                start = new Date(today.setDate(diff)).toISOString().split('T')[0]
-                const last = new Date(today.setDate(new Date(start).getDate() + 6)).toISOString().split('T')[0]
-                end = last
-                periodText = `${new Date(start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} s/d ${new Date(end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
-            } else {
-                start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
-                end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]
-                periodText = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-            }
-
-            const { data: attendData, error } = await supabase
-                .from('member_attendance')
-                .select('member_id, status')
-                .eq('coach_id', coachId)
-                .gte('date', start)
-                .lte('date', end)
-
-            if (error) throw error
-
-            const summary = {}
-            attendData.forEach(item => {
-                if (!summary[item.member_id]) {
-                    summary[item.member_id] = { hadir: 0, izin: 0, sakit: 0, alfa: 0 }
-                }
-                summary[item.member_id][item.status]++
-            })
-
-            setPrintData({
-                members: members,
-                data: summary,
-                period: periodText,
-                type: type
-            })
-
-            setShowPrintDropdown(false)
-
-            // Wait for state update then print
-            setTimeout(() => {
-                window.print()
-            }, 500)
-
-        } catch (err) {
-            alert('Gagal mengambil data cetak: ' + err.message)
-        } finally {
-            setPrinting(false)
-        }
-    }
 
     const saveAttendance = async () => {
         setSaving(true)
@@ -242,23 +208,43 @@ export default function MemberAttendancePage() {
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                         <Calendar className="text-blue-500" />
-                        Presensi Atlet
+                        Penilaian Harian Atlet
                     </h1>
                     <p className="text-slate-400 text-sm mt-1">
-                        Pilih tanggal dan centang kehadiran atlet setiap sesi.
+                        Pilih tanggal pertemuan dan centang kehadiran serta metrik latihan atlet.
                     </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 flex-wrap">
-                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 flex items-center gap-3 min-w-[160px]">
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 flex items-center gap-3 min-w-[200px]">
                         <Calendar size={18} className="text-blue-400 flex-shrink-0" />
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="bg-transparent text-white focus:outline-none text-sm w-full"
-                        />
+                        <div className="flex flex-col flex-1">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Tanggal Pertemuan</span>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="bg-transparent text-white focus:outline-none text-sm w-full font-bold"
+                            />
+                        </div>
                     </div>
+
+                    {userRole === 'head_coach' && (
+                        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 flex items-center gap-3 min-w-[200px]">
+                            <Filter size={18} className="text-slate-500 flex-shrink-0" />
+                            <div className="flex flex-col flex-1">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Filter Program</span>
+                                <select
+                                    value={selectedProgram}
+                                    onChange={(e) => setSelectedProgram(e.target.value)}
+                                    className="bg-transparent text-white focus:outline-none text-sm w-full font-bold cursor-pointer"
+                                >
+                                    <option value="" className="bg-slate-800 italic">Semua Program</option>
+                                    {PROGRAMS.map(p => <option key={p.id} value={p.id} className="bg-slate-800">{p.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 md:gap-3">
                         <button
@@ -278,43 +264,6 @@ export default function MemberAttendancePage() {
                         </button>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
-                        <button
-                            onClick={() => setShowPrintDropdown(!showPrintDropdown)}
-                            disabled={printing}
-                            className="w-full sm:w-auto bg-slate-700 hover:bg-slate-600 text-white px-4 md:px-5 py-2.5 rounded-xl font-bold border border-slate-600 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
-                        >
-                            <Printer size={18} className="flex-shrink-0" />
-                            <span>Cetak Laporan</span>
-                            <ChevronDown size={16} className={`transition-transform duration-300 flex-shrink-0 ${showPrintDropdown ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {showPrintDropdown && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setShowPrintDropdown(false)}></div>
-                                <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-20 animate-slideIn">
-                                    <button
-                                        onClick={() => handlePrintPeriod('weekly')}
-                                        className="w-full px-5 py-3 text-left text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-3 border-b border-slate-700/50"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                                            <Printer size={14} />
-                                        </div>
-                                        Cetak Mingguan
-                                    </button>
-                                    <button
-                                        onClick={() => handlePrintPeriod('monthly')}
-                                        className="w-full px-5 py-3 text-left text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-3"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
-                                            <Printer size={14} />
-                                        </div>
-                                        Cetak Bulanan
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
                 </div>
             </div>
 
@@ -324,6 +273,7 @@ export default function MemberAttendancePage() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-800 border-b border-slate-700">
+                                <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider w-12 text-center">No.</th>
                                 <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">Atlet</th>
                                 <th className="px-6 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Hadir</th>
                                 <th className="px-6 py-4 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Izin</th>
@@ -336,23 +286,28 @@ export default function MemberAttendancePage() {
                         <tbody className="divide-y divide-slate-700/50">
                             {members.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500 italic">
-                                        Tidak ada atlet terdaftar di program {program?.toUpperCase()}.
+                                    <td colSpan="8" className="px-6 py-12 text-center text-slate-500 italic">
+                                        Tidak ada atlet terdaftar {selectedProgram ? `di program ${selectedProgram?.toUpperCase()}` : 'di sistem'}.
                                     </td>
                                 </tr>
-                            ) : members.map((m) => {
+                            ) : members.map((m, index) => {
                                 const status = attendance[m.id]
                                 return (
                                     <tr key={m.id} className="hover:bg-slate-700/20 transition-colors">
+                                        <td className="px-6 py-4 text-center text-xs font-bold text-slate-600">{index + 1}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
                                                     {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : <Users size={16} className="text-slate-500" />}
                                                 </div>
-                                                <span className="text-white font-medium text-sm">{m.full_name}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-white font-medium text-sm">{m.full_name}</span>
+                                                    {userRole === 'head_coach' && !selectedProgram && m.program_pilihan && (
+                                                        <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter italic leading-none">{m.program_pilihan}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
-
                                         {['hadir', 'izin', 'sakit', 'alfa'].map((s) => {
                                             const isSelected = status === s
                                             const config = {
@@ -526,15 +481,6 @@ export default function MemberAttendancePage() {
                 </div>
             </div>
 
-            {/* Print Component */}
-            <AttendancePrint
-                members={printData.members}
-                attendanceData={printData.data}
-                period={printData.period}
-                type={printData.type}
-                settings={settings}
-                coachName={coachName}
-            />
         </div>
     )
 }

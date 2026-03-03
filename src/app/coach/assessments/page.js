@@ -17,15 +17,18 @@ import {
     AlertCircle,
     Info,
     ArrowUpCircle,
-    CheckCircle2
+    CheckCircle2,
+    Filter
 } from 'lucide-react'
-import { LEVEL_MAPPING } from '@/lib/constants'
+import { LEVEL_MAPPING, PROGRAMS } from '@/lib/constants'
 
 export default function MemberAssessmentsPage() {
     const [members, setMembers] = useState([])
     const [program, setProgram] = useState('')
     const [coachId, setCoachId] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
+    const [userRole, setUserRole] = useState('')
+    const [selectedProgram, setSelectedProgram] = useState('')
     const [loading, setLoading] = useState(true)
 
     // Selection Month/Year
@@ -60,56 +63,99 @@ export default function MemberAssessmentsPage() {
     const [promotingMember, setPromotingMember] = useState(null)
     const [promoting, setPromoting] = useState(false)
 
-    const initData = async () => {
+    const [viewMode, setViewMode] = useState('monthly') // 'monthly', 'quarterly'
+
+    const fetchData = async () => {
+        if (!coachId) return
         setLoading(true)
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            setCoachId(user.id)
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('program_pilihan')
-                .eq('id', user.id)
-                .single()
-            setProgram(profile?.program_pilihan)
-
-            const { data: memberData } = await supabase
+            // Dynamic member query
+            let memberQuery = supabase
                 .from('profiles')
                 .select('id, full_name, avatar_url, program_pilihan')
                 .eq('role', 'member')
-                .eq('program_pilihan', profile?.program_pilihan)
+
+            if (selectedProgram) {
+                memberQuery = memberQuery.eq('program_pilihan', selectedProgram)
+            }
+
+            const { data: memberData } = await memberQuery
                 .order('full_name', { ascending: true })
 
             // Fetch latest assessment for each member in the selected month
-            const startOfMonth = new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0]
-            const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0]
+            let assessments = []
+            if (viewMode === 'monthly') {
+                const startOfMonth = new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0]
+                const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0]
 
-            const { data: assessments } = await supabase
-                .from('member_assessments')
-                .select('*')
-                .in('member_id', (memberData || []).map(m => m.id))
-                .gte('date', startOfMonth)
-                .lte('date', endOfMonth)
-                .order('created_at', { ascending: false })
+                const { data } = await supabase
+                    .from('member_assessments')
+                    .select('*')
+                    .in('member_id', (memberData || []).map(m => m.id))
+                    .gte('date', startOfMonth)
+                    .lte('date', endOfMonth)
+                    .order('created_at', { ascending: false })
+                assessments = data || []
+            } else {
+                // Quarterly: Get last 3 months
+                const endOfPeriod = new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0]
+                const startOfPeriod = new Date(selectedYear, selectedMonth - 2, 1).toISOString().split('T')[0]
+
+                const { data } = await supabase
+                    .from('member_assessments')
+                    .select('*')
+                    .in('member_id', (memberData || []).map(m => m.id))
+                    .gte('date', startOfPeriod)
+                    .lte('date', endOfPeriod)
+                    .order('date', { ascending: false })
+                assessments = data || []
+            }
 
             const membersWithLatest = (memberData || []).map(m => {
                 const latest = assessments?.find(a => a.member_id === m.id)
-                return { ...m, latest_assessment: latest }
+                const allInPeriod = assessments?.filter(a => a.member_id === m.id) || []
+                return { ...m, latest_assessment: latest, period_assessments: allInPeriod }
             })
 
             setMembers([...membersWithLatest])
 
         } catch (error) {
-            console.error('Error:', error)
+            console.error('Error fetching assessments:', error)
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        initData()
-    }, [selectedMonth, selectedYear])
+        const initProfile = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) return
+                setCoachId(user.id)
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, program_pilihan, role')
+                    .eq('id', user.id)
+                    .single()
+
+                setUserRole(profile?.role)
+
+                if (profile?.role === 'head_coach') {
+                    setSelectedProgram('')
+                } else {
+                    setSelectedProgram(profile?.program_pilihan)
+                }
+            } catch (error) {
+                console.error('Error initializing profile:', error)
+            }
+        }
+        initProfile()
+    }, [])
+
+    useEffect(() => {
+        fetchData()
+    }, [selectedMonth, selectedYear, viewMode, selectedProgram, coachId])
 
     const fetchAttendance = async (memberId) => {
         try {
@@ -167,24 +213,29 @@ export default function MemberAssessmentsPage() {
 
         // If an assessment exists for this month, load it for editing
         if (member.latest_assessment) {
-            const evalData = member.latest_assessment.evaluation || {}
-            setFormData({
-                technique: evalData.technique || 4,
-                discipline: evalData.discipline || 4,
-                physical: evalData.physical || 4,
-                mental: evalData.mental || 4,
-                notes: member.latest_assessment.notes || ''
-            })
-        } else {
-            // Default empty form
-            setFormData({
-                technique: 4,
-                discipline: 4,
-                physical: 4,
-                mental: 4,
-                notes: ''
-            })
+            // Only load if it matches the current selected month for editing
+            const assessDate = new Date(member.latest_assessment.date)
+            if (assessDate.getMonth() === selectedMonth && assessDate.getFullYear() === selectedYear) {
+                const evalData = member.latest_assessment.evaluation || {}
+                setFormData({
+                    technique: evalData.technique || 4,
+                    discipline: evalData.discipline || 4,
+                    physical: evalData.physical || 4,
+                    mental: evalData.mental || 4,
+                    notes: member.latest_assessment.notes || ''
+                })
+                return
+            }
         }
+
+        // Default empty form
+        setFormData({
+            technique: 4,
+            discipline: 4,
+            physical: 4,
+            mental: 4,
+            notes: ''
+        })
     }
 
     // Effect to calculate score
@@ -268,10 +319,17 @@ export default function MemberAssessmentsPage() {
 
             let result;
             if (selectedMember.latest_assessment) {
-                result = await supabase
-                    .from('member_assessments')
-                    .update(assessmentData)
-                    .eq('id', selectedMember.latest_assessment.id)
+                const assessDate = new Date(selectedMember.latest_assessment.date)
+                if (assessDate.getMonth() === selectedMonth && assessDate.getFullYear() === selectedYear) {
+                    result = await supabase
+                        .from('member_assessments')
+                        .update(assessmentData)
+                        .eq('id', selectedMember.latest_assessment.id)
+                } else {
+                    result = await supabase
+                        .from('member_assessments')
+                        .insert([assessmentData])
+                }
             } else {
                 result = await supabase
                     .from('member_assessments')
@@ -304,11 +362,27 @@ export default function MemberAssessmentsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                         <BarChart3 className="text-blue-500" />
-                        Penilaian Bulanan
+                        Penilaian Atlet
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1 uppercase font-black tracking-widest flex items-center gap-2">
-                        Periode: <span className="text-blue-400">{months[selectedMonth]} {selectedYear}</span>
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                            <button
+                                onClick={() => setViewMode('monthly')}
+                                className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${viewMode === 'monthly' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Bulanan
+                            </button>
+                            <button
+                                onClick={() => setViewMode('quarterly')}
+                                className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${viewMode === 'quarterly' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Triwulan
+                            </button>
+                        </div>
+                        <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest bg-slate-800/50 px-2 py-1.5 rounded-lg border border-slate-700/50">
+                            {viewMode === 'monthly' ? months[selectedMonth] : `${months[(selectedMonth - 2 + 12) % 12]} - ${months[selectedMonth]}`} {selectedYear}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center gap-3">
@@ -333,6 +407,20 @@ export default function MemberAssessmentsPage() {
                         </select>
                     </div>
 
+                    {userRole === 'head_coach' && (
+                        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl p-1">
+                            <Filter className="w-4 h-4 text-slate-500 ml-2" />
+                            <select
+                                value={selectedProgram}
+                                onChange={(e) => setSelectedProgram(e.target.value)}
+                                className="bg-transparent text-white text-xs font-bold px-2 py-1 focus:outline-none cursor-pointer"
+                            >
+                                <option value="" className="bg-slate-800 italic">Semua Program</option>
+                                {PROGRAMS.map(p => <option key={p.id} value={p.id} className="bg-slate-800">{p.name}</option>)}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="relative w-full md:w-auto">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
                         <input
@@ -351,6 +439,7 @@ export default function MemberAssessmentsPage() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-800 border-b border-slate-700">
+                                <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider w-12 text-center">No.</th>
                                 <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">Atlet</th>
                                 <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">Skor Terakhir</th>
                                 <th className="px-6 py-4 text-slate-400 text-xs font-bold uppercase tracking-wider">Kategori Terakhir</th>
@@ -360,19 +449,25 @@ export default function MemberAssessmentsPage() {
                         <tbody className="divide-y divide-slate-700/50">
                             {filteredMembers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="px-6 py-20 text-center text-slate-500 italic">
+                                    <td colSpan="5" className="px-6 py-20 text-center text-slate-500 italic">
                                         <SearchX size={48} className="mx-auto mb-4 opacity-20" />
-                                        Belum ada atlet yang ditemukan.
+                                        Belum ada atlet yang ditemukan {selectedProgram ? `di program ${selectedProgram?.toUpperCase()}` : 'di sistem'}.
                                     </td>
                                 </tr>
-                            ) : filteredMembers.map((m) => (
+                            ) : filteredMembers.map((m, index) => (
                                 <tr key={m.id} className="hover:bg-slate-700/20 transition-colors group">
+                                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-600">{index + 1}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center overflow-hidden">
                                                 {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : <User size={20} className="text-slate-500" />}
                                             </div>
-                                            <span className="text-white font-bold group-hover:text-blue-400 transition-colors uppercase tracking-tight">{m.full_name}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-white font-bold group-hover:text-blue-400 transition-colors uppercase tracking-tight leading-none">{m.full_name}</span>
+                                                {userRole === 'head_coach' && !selectedProgram && m.program_pilihan && (
+                                                    <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter italic leading-none mt-1">{m.program_pilihan}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

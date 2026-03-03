@@ -145,10 +145,10 @@ export default function AdminReportsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                         <ClipboardList className="text-blue-500" />
-                        Aktivitas Pelatih
+                        Monitoring Kinerja Pelatih
                     </h1>
                     <p className="text-slate-400 text-sm mt-1">
-                        Pantau absensi harian dan tinjau laporan dari seluruh pelatih.
+                        Pantau absensi harian, jumlah latihan, serta tinjau laporan kerja seluruh pelatih.
                     </p>
                 </div>
 

@@ -14,11 +14,11 @@ export default function Footer() {
                 {/* Column 1: Brand */}
                 <div className="space-y-6">
                     <div className="flex items-center gap-4 group">
-                        <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-blue-500/10 border border-slate-800 p-1 group-hover:scale-105 transition-transform duration-500">
+                        <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-xl shadow-blue-500/10 border border-slate-800 p-2 group-hover:scale-110 transition-transform duration-500 flex-shrink-0">
                             {settings.club_logo ? (
-                                <img src={settings.club_logo} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                                <img src={settings.club_logo} alt="Logo" className="w-full h-full object-cover rounded-full" />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-400 rounded-xl flex items-center justify-center">
+                                <div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-400 rounded-full flex items-center justify-center">
                                     <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" /></svg>
                                 </div>
                             )}

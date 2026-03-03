@@ -21,6 +21,7 @@ import { useSettings } from '@/context/SettingsContext'
 export default function AdminSidebar() {
     const [isOpen, setIsOpen] = useState(false)
     const [user, setUser] = useState(null)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
     const { settings } = useSettings()
@@ -41,18 +42,24 @@ export default function AdminSidebar() {
     }, [])
 
     const handleLogout = async () => {
-        await supabase.auth.signOut()
-        router.push('/')
+        try {
+            setIsLoggingOut(true)
+            await supabase.auth.signOut()
+            // Use window.location.href for a full clean redirect
+            window.location.href = '/'
+        } catch (error) {
+            console.error('Logout error:', error)
+            router.push('/')
+        }
     }
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
         { name: 'Daftar Pelatih', icon: Users, href: '/admin/coaches' },
         { name: 'Daftar Anggota', icon: UserCheck, href: '/admin/members' },
-        { name: 'Evaluasi Atlet', icon: BarChart3, href: '/admin/evaluations' },
         { name: 'Instruksi Admin', icon: FileText, href: '/admin/instructions' },
         { name: 'Pusat Postingan', icon: FileText, href: '/admin/contents' },
-        { name: 'Laporan & Absensi', icon: BarChart3, href: '/admin/reports' },
+        { name: 'Monitoring Pelatih', icon: BarChart3, href: '/admin/reports' },
         { name: 'Pengaturan Site', icon: Settings, href: '/admin/settings' },
     ]
 
@@ -87,14 +94,14 @@ export default function AdminSidebar() {
                 <div className="p-6 border-b border-slate-700/50">
                     <Link href="/admin" className="flex items-center gap-3 group/logo">
                         <div className="relative">
-                            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-lg border border-slate-700 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-white shadow-lg border border-slate-700 flex items-center justify-center group-hover/logo:scale-105 transition-transform duration-300">
                                 {settings.club_logo ? (
                                     <img src={settings.club_logo} alt="JSC Logo" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold text-xl">J</div>
                                 )}
                             </div>
-                            <div className="absolute -inset-1 bg-blue-500/20 blur-sm rounded-xl -z-10 group-hover/logo:bg-blue-500/30 transition-colors"></div>
+                            <div className="absolute -inset-1 bg-blue-500/20 blur-sm rounded-full -z-10 group-hover/logo:bg-blue-500/30 transition-colors"></div>
                         </div>
                         <div className="flex flex-col">
                             <h1 className="text-white font-black text-sm tracking-tight leading-none">JOHAN SWIMMING</h1>
@@ -150,10 +157,11 @@ export default function AdminSidebar() {
 
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-bold transition-all duration-200 group"
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 font-bold transition-all duration-200 group disabled:opacity-50"
                     >
-                        <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-xs">Logout Panel</span>
+                        <LogOut size={18} className={`group-hover:-translate-x-1 transition-transform ${isLoggingOut ? 'animate-pulse' : ''}`} />
+                        <span className="text-xs">{isLoggingOut ? 'Memproses...' : 'Logout Panel'}</span>
                     </button>
                     <div className="mt-4 pb-2 px-2 text-[9px] text-slate-500 text-center font-bold uppercase tracking-widest opacity-40">
                         Admin JSC v2.0

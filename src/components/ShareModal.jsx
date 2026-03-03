@@ -119,7 +119,7 @@ export default function ShareModal() {
                 setTimeout(() => window.open('https://www.tiktok.com/', '_blank'), 1500)
             }
         } else {
-            console.log(`Open Share Link: ${social.name}`)
+
             setTimeout(closeShareModal, 1000)
         }
     }
@@ -129,7 +129,7 @@ export default function ShareModal() {
             e.preventDefault()
             e.stopPropagation()
         }
-        console.log(`ShareModal closing via: ${source}`)
+
         closeShareModal()
     }
 

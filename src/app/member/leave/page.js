@@ -198,7 +198,7 @@ export default function MemberLeavePage() {
 
                                     <button
                                         onClick={() => handleDelete(req.id)}
-                                        className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 active:scale-95 shrink-0"
+                                        className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all active:scale-95 shrink-0"
                                         title="Hapus Izin"
                                     >
                                         <Trash2 size={18} />

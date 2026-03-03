@@ -26,7 +26,7 @@ export default function QuickActions() {
             hover: 'hover:bg-purple-700'
         },
         {
-            name: 'Laporan Absensi',
+            name: 'Monitoring Pelatih',
             href: '/admin/reports',
             icon: BarChart3,
             color: 'bg-amber-600',
