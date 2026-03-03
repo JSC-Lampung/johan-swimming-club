@@ -12,6 +12,7 @@ export default function MemberTable() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [editingUser, setEditingUser] = useState(null)
     const [resettingUser, setResettingUser] = useState(null)
+    const [programFilter, setProgramFilter] = useState('all')
 
     async function fetchMembers() {
         try {
@@ -79,16 +80,41 @@ export default function MemberTable() {
         }
     }
 
+    const filteredMembers = members.filter(m => {
+        if (programFilter === 'all') return true
+        const prog = (m.program_pilihan || m.program || '').toLowerCase()
+        return prog === programFilter
+    })
+
     if (loading) return <div className="p-8 text-center text-slate-400">Loading members...</div>
 
     return (
         <>
             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 animate-slideIn">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white">Daftar Anggota Aktif <span className="text-blue-400 ml-2">({members.length})</span></h3>
-                    <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
-                        + Tambah Anggota Manual
-                    </button>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-white">Daftar Anggota Aktif <span className="text-blue-400 ml-2">({filteredMembers.length})</span></h3>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Total: {members.length} Member</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4">
+                        <select
+                            value={programFilter}
+                            onChange={(e) => setProgramFilter(e.target.value)}
+                            className="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-xl px-4 py-2 outline-none focus:border-blue-500 transition-all"
+                        >
+                            <option value="all">Semua Program</option>
+                            <option value="pemula">Kelas Pemula</option>
+                            <option value="dasar">Kelas Dasar</option>
+                            <option value="menengah">Kelas Menengah</option>
+                            <option value="prestasi">Kelas Prestasi</option>
+                            <option value="privat">Kelas Privat</option>
+                            <option value="fitness">Kelas Fitness</option>
+                        </select>
+                        <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg">
+                            + Tambah Anggota Manual
+                        </button>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-slate-200">
@@ -105,9 +131,9 @@ export default function MemberTable() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700/50">
-                            {members.length === 0 ? (
-                                <tr><td colSpan="8" className="py-8 text-center text-slate-500">Belum ada anggota.</td></tr>
-                            ) : members.map((m, index) => {
+                            {filteredMembers.length === 0 ? (
+                                <tr><td colSpan="8" className="py-8 text-center text-slate-500">Belum ada anggota ditemukan dengan filter ini.</td></tr>
+                            ) : filteredMembers.map((m, index) => {
                                 const isVerified = (m.status || '').toLowerCase() === 'active'
                                 return (
                                     <tr key={m.id} className="hover:bg-slate-700/30 transition-colors">

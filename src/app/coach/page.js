@@ -190,7 +190,7 @@ export default function CoachDashboard() {
                             <p className="text-[10px] text-slate-500">Mulai input kehadiran hari ini</p>
                         </Link>
                         <Link href="/coach/assessments" className="p-4 bg-slate-700/40 rounded-xl hover:bg-slate-700 transition-colors border border-slate-600/50 group">
-                            <h4 className="text-white font-medium mb-1 group-hover:text-blue-400">Input Nilai</h4>
+                            <h4 className="text-white font-medium mb-1 group-hover:text-blue-400">Evaluasi Bulanan</h4>
                             <p className="text-[10px] text-slate-500">Catat perkembangan teknik</p>
                         </Link>
                         <Link href="/coach/members" className="p-4 bg-slate-700/40 rounded-xl hover:bg-slate-700 transition-colors border border-slate-600/50 group">

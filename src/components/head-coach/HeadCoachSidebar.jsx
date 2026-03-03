@@ -64,7 +64,7 @@ export default function HeadCoachSidebar() {
         { name: 'Evaluasi Bulanan', icon: BarChart3, href: '/head-coach/assessments' },
         { name: 'Best Time Atlet', icon: Trophy, href: '/head-coach/best-time' },
         { name: 'Sertifikat Level', icon: ScrollText, href: '/head-coach/certificates' },
-        { name: 'Izin Member', icon: Mail, href: '/coach/leave-requests' },
+        { name: 'Izin Member', icon: Mail, href: '/head-coach/leave-requests' },
         { name: 'Laporan Kegiatan', icon: FileText, href: '/head-coach/reports' },
         { name: 'Cetak Laporan', icon: Printer, href: '/head-coach/reports/print' },
         { name: 'Instruksi Admin', icon: FileText, href: '/head-coach/instructions' },
