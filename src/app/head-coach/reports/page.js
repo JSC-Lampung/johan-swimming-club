@@ -13,7 +13,10 @@ import {
     Search,
     Calendar,
     Filter,
-    Users
+    Users,
+    Trash2,
+    CheckSquare,
+    Square
 } from 'lucide-react'
 import { PROGRAMS } from '@/lib/constants'
 
@@ -29,6 +32,9 @@ export default function HeadCoachReportsPage() {
     const [searchCoach, setSearchCoach] = useState('All')
     const [searchProgram, setSearchProgram] = useState('All')
     const [searchTitle, setSearchTitle] = useState('')
+
+    // Selection State
+    const [selectedIds, setSelectedIds] = useState(new Set())
 
     // Form State (For Head Coach's own reports)
     const [title, setTitle] = useState('')
@@ -109,7 +115,76 @@ export default function HeadCoachReportsPage() {
 
         if (!error) {
             setReports(reports.map(r => r.id === reportId ? { ...r, is_reviewed: !currentStatus } : r))
+            if (!currentStatus === false) {
+                // If unmarked as reviewed, remove from selection
+                setSelectedIds(prev => {
+                    const next = new Set(prev)
+                    next.delete(reportId)
+                    return next
+                })
+            }
         }
+    }
+
+    const handleDeleteReport = async (id) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) return
+        try {
+            const { error } = await supabase
+                .from('coach_reports')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+            setReports(reports.filter(r => r.id !== id))
+            setSelectedIds(prev => {
+                const next = new Set(prev)
+                next.delete(id)
+                return next
+            })
+        } catch (error) {
+            alert('Gagal menghapus laporan: ' + error.message)
+        }
+    }
+
+    const handleBulkDelete = async () => {
+        const count = selectedIds.size
+        if (count === 0) return
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${count} laporan yang terpilih?`)) return
+
+        try {
+            const { error } = await supabase
+                .from('coach_reports')
+                .delete()
+                .in('id', Array.from(selectedIds))
+
+            if (error) throw error
+            setReports(reports.filter(r => !selectedIds.has(r.id)))
+            setSelectedIds(new Set())
+            alert(`${count} laporan berhasil dihapus.`)
+        } catch (error) {
+            alert('Gagal menghapus laporan secara massal: ' + error.message)
+        }
+    }
+
+    const toggleSelectAllReviewed = () => {
+        const reviewedIds = filteredReports
+            .filter(r => r.is_reviewed)
+            .map(r => r.id)
+
+        if (selectedIds.size === reviewedIds.length && reviewedIds.length > 0) {
+            setSelectedIds(new Set())
+        } else {
+            setSelectedIds(new Set(reviewedIds))
+        }
+    }
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
     }
 
     const filteredReports = reports.filter(r => {
@@ -248,6 +323,39 @@ export default function HeadCoachReportsPage() {
                         </div>
                     </div>
 
+                    {/* Bulk Action Bar */}
+                    {filteredReports.some(r => r.is_reviewed) && (
+                        <div className="flex items-center justify-between bg-slate-900/60 p-4 rounded-2xl border border-slate-700/50 animate-fadeIn">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={toggleSelectAllReviewed}
+                                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
+                                >
+                                    {selectedIds.size > 0 && selectedIds.size === filteredReports.filter(r => r.is_reviewed).length ? (
+                                        <CheckSquare size={18} className="text-blue-500" />
+                                    ) : (
+                                        <Square size={18} />
+                                    )}
+                                    Pilih Semua Sudah Dibaca
+                                </button>
+                                {selectedIds.size > 0 && (
+                                    <span className="text-blue-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
+                                        {selectedIds.size} Terpilih
+                                    </span>
+                                )}
+                            </div>
+                            {selectedIds.size > 0 && (
+                                <button
+                                    onClick={handleBulkDelete}
+                                    className="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border border-red-500/20 active:scale-95"
+                                >
+                                    <Trash2 size={14} />
+                                    Hapus Masal ({selectedIds.size})
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 gap-6">
                         {filteredReports.length === 0 ? (
                             <div className="py-24 text-center bg-slate-800/10 border-2 border-dashed border-slate-800 rounded-[3rem]">
@@ -256,7 +364,21 @@ export default function HeadCoachReportsPage() {
                             </div>
                         ) : (
                             filteredReports.map((report) => (
-                                <div key={report.id} className="bg-slate-800/40 border border-slate-700/50 rounded-[2.5rem] p-8 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+                                <div key={report.id} className={`bg-slate-800/40 border ${selectedIds.has(report.id) ? 'border-blue-500 bg-blue-500/5' : 'border-slate-700/50'} rounded-[2.5rem] p-8 hover:border-blue-500/30 transition-all group relative overflow-hidden`}>
+                                    {/* Select Checkbox (Only for reviewed reports) */}
+                                    {report.is_reviewed && (
+                                        <button
+                                            onClick={() => toggleSelect(report.id)}
+                                            className="absolute top-6 right-6 z-20 text-slate-600 hover:text-blue-500 transition-colors"
+                                        >
+                                            {selectedIds.has(report.id) ? (
+                                                <CheckSquare size={24} className="text-blue-500" />
+                                            ) : (
+                                                <Square size={24} />
+                                            )}
+                                        </button>
+                                    )}
+
                                     {/* Status Indicator */}
                                     <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-500 ${report.is_reviewed ? 'bg-emerald-500 shadowy-emerald-400/50' : 'bg-blue-500 animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.5)]'}`}></div>
 
@@ -299,6 +421,14 @@ export default function HeadCoachReportsPage() {
                                                 ) : (
                                                     <> <Clock size={14} /> TANDAI DIBACA </>
                                                 )}
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleDeleteReport(report.id)}
+                                                className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all active:scale-95 border border-red-500/20"
+                                                title="Hapus Laporan"
+                                            >
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>

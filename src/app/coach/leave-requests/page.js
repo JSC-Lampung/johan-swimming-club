@@ -15,22 +15,38 @@ import {
 
 export default function CoachLeaveRequestsPage() {
     const [requests, setRequests] = useState([])
+    const [profile, setProfile] = useState(null)
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
-        fetchRequests()
+        const initialize = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('program_pilihan')
+                    .eq('id', user.id)
+                    .single()
+                setProfile(profileData)
+                fetchRequests(profileData?.program_pilihan)
+            } else {
+                setLoading(false)
+            }
+        }
+        initialize()
     }, [])
 
-    const fetchRequests = async () => {
+    const fetchRequests = async (coachProgram) => {
         try {
             const { data, error } = await supabase
                 .from('member_leave_requests')
                 .select(`
                     *,
-                    member:profiles!member_id(id, full_name, avatar_url, program_pilihan)
+                    member:profiles!inner(id, full_name, avatar_url, program_pilihan)
                 `)
+                .eq('member.program_pilihan', coachProgram)
                 .order('created_at', { ascending: false })
 
             if (error) {

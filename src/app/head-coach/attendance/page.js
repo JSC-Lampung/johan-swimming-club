@@ -23,6 +23,7 @@ import { PROGRAMS } from '@/lib/constants'
 export default function HeadCoachAttendancePage() {
     const [members, setMembers] = useState([])
     const [attendance, setAttendance] = useState({}) // { memberId: status }
+    const [leaveRequests, setLeaveRequests] = useState({}) // { memberId: reason }
     const [dailyScores, setDailyScores] = useState({}) // { memberId: score }
     const [dailyMetrics, setDailyMetrics] = useState({}) // { memberId: { technique: 0, discipline: 0, physical: 0, mental: 0 } }
     const [coachId, setCoachId] = useState(null)
@@ -62,8 +63,7 @@ export default function HeadCoachAttendancePage() {
                     .order('full_name', { ascending: true })
                 setMembers(memberData || [])
 
-                // Fetch existing attendance for this date (regardles of which coach entered it, or maybe just this head coach?)
-                // Since Head Coach represents the club, let's see any attendance for these members on this date.
+                // Fetch existing attendance for this date
                 const memberIds = memberData?.map(m => m.id) || []
 
                 if (memberIds.length > 0) {
@@ -84,8 +84,22 @@ export default function HeadCoachAttendancePage() {
                     setAttendance(attendMap)
                     setDailyScores(scoreMap)
                     setDailyMetrics(metricsMap)
+
+                    // Fetch leave requests for this date
+                    const { data: leaveData } = await supabase
+                        .from('member_leave_requests')
+                        .select('member_id, reason')
+                        .in('member_id', memberIds)
+                        .eq('leave_date', selectedDate)
+
+                    const leaveMap = {}
+                    leaveData?.forEach(item => {
+                        leaveMap[item.member_id] = item.reason
+                    })
+                    setLeaveRequests(leaveMap)
                 } else {
                     setAttendance({})
+                    setLeaveRequests({})
                     setDailyScores({})
                     setDailyMetrics({})
                 }
@@ -186,7 +200,7 @@ export default function HeadCoachAttendancePage() {
                         <Calendar className="text-blue-500" />
                         PENILAIAN HARIAN (ALL)
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1 font-medium italic">
+                    <p className="text-slate-400 text-sm mt-1 font-medium italic text-blue-400/80">
                         Monitoring tanggal pertemuan dan input kehadiran atlet lintas program.
                     </p>
                 </div>
@@ -224,7 +238,7 @@ export default function HeadCoachAttendancePage() {
                 </div>
             </div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm">
+            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm shadow-2xl">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left">
                         <thead>
@@ -249,15 +263,21 @@ export default function HeadCoachAttendancePage() {
                                         <td className="px-6 py-4 text-center text-[10px] font-black text-slate-600">{index + 1}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
+                                                <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
                                                     {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" /> : <Users size={18} className="text-slate-600" />}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-white text-xs uppercase tracking-tight">{m.full_name}</span>
-                                                    {selectedProgram === 'all' && m.program_pilihan && (
-                                                        <span className="text-[8px] font-black uppercase text-blue-500 tracking-widest mt-0.5">
-                                                            {m.program_pilihan}
+                                                    <span className="text-white text-xs uppercase tracking-tight truncate max-w-[150px]">{m.full_name}</span>
+                                                    {leaveRequests[m.id] ? (
+                                                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter italic animate-pulse">
+                                                            Izin: {leaveRequests[m.id]}
                                                         </span>
+                                                    ) : (
+                                                        selectedProgram === 'all' && m.program_pilihan && (
+                                                            <span className="text-[8px] font-black uppercase text-blue-500 tracking-widest mt-0.5">
+                                                                {m.program_pilihan}
+                                                            </span>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
@@ -284,16 +304,23 @@ export default function HeadCoachAttendancePage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-center gap-3">
                                                 {[
-                                                    { key: 'technique', icon: Trophy, color: 'blue' },
-                                                    { key: 'discipline', icon: ShieldCheck, color: 'emerald' },
-                                                    { key: 'physical', icon: Activity, color: 'amber' },
-                                                    { key: 'mental', icon: Brain, color: 'purple' }
+                                                    { key: 'technique', icon: Trophy, color: 'blue', label: 'TEKNIK (40%)' },
+                                                    { key: 'discipline', icon: ShieldCheck, color: 'emerald', label: 'DISIPLIN (20%)' },
+                                                    { key: 'physical', icon: Activity, color: 'amber', label: 'FISIK (20%)' },
+                                                    { key: 'mental', icon: Brain, color: 'purple', label: 'SIKAP (20%)' }
                                                 ].map(mItem => (
-                                                    <div key={mItem.key} className="flex flex-col items-center gap-1">
-                                                        <button disabled={status !== 'hadir'} onClick={() => updateMetric(m.id, mItem.key, ((dailyMetrics[m.id]?.[mItem.key] || 0) % 5) + 1)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all border ${status === 'hadir' ? `bg-${mItem.color}-500/10 border-${mItem.color}-500/30 text-${mItem.color}-400 hover:bg-${mItem.color}-500 hover:text-white` : 'opacity-10 grayscale'}`}>
+                                                    <div key={mItem.key} className="flex flex-col items-center gap-1 group relative">
+                                                        <button
+                                                            disabled={status !== 'hadir'}
+                                                            onClick={() => updateMetric(m.id, mItem.key, ((dailyMetrics[m.id]?.[mItem.key] || 0) % 5) + 1)}
+                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all border ${status === 'hadir' ? `bg-${mItem.color}-500/10 border-${mItem.color}-500/30 text-${mItem.color}-400 hover:bg-${mItem.color}-500 hover:text-white` : 'opacity-10 grayscale'}`}
+                                                        >
                                                             <mItem.icon size={14} />
                                                         </button>
                                                         <span className="text-[10px] text-slate-500">{dailyMetrics[m.id]?.[mItem.key] || 0}</span>
+                                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[8px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                                                            {mItem.label}
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -308,6 +335,84 @@ export default function HeadCoachAttendancePage() {
                             })}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Grading Guide Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-800/80 border border-slate-700/50 rounded-3xl p-8 backdrop-blur-md shadow-2xl">
+                    <h3 className="text-white font-black text-sm uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                        <div className="w-2 h-4 bg-blue-600 rounded-full animate-pulse"></div>
+                        Panduan Penilaian (Skala 1 - 5)
+                    </h3>
+                    <div className="grid grid-cols-5 gap-2">
+                        {[
+                            { val: 1, label: 'Sangat Kurang', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                            { val: 2, label: 'Kurang', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+                            { val: 3, label: 'Cukup', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                            { val: 4, label: 'Baik', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                            { val: 5, label: 'Istimewa', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' }
+                        ].map((item) => (
+                            <div key={item.val} className={`p-2 rounded-xl border text-center ${item.color}`}>
+                                <div className="text-lg font-black">{item.val}</div>
+                                <div className="text-[7px] uppercase font-bold tracking-tighter leading-tight mt-1">{item.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-6 space-y-3">
+                        <div className="flex items-start gap-3 p-3 bg-blue-600/5 rounded-2xl border border-blue-600/10">
+                            <AlertCircle size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-slate-400 font-medium leading-relaxed italic">
+                                Klik pada ikon metrik (T/D/F/S) di tabel untuk mengubah skor. Skor akan otomatis berputar dari 1 ke 5.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-slate-800/80 border border-slate-700/50 rounded-3xl p-8 backdrop-blur-md shadow-2xl">
+                    <h3 className="text-white font-black text-sm uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                        <Activity size={18} className="text-blue-500" />
+                        Keterangan Metrik
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5">
+                                <Trophy size={10} /> Teknik (40%)
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">Kualitas gerakan, efisiensi di air, & koordinasi.</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-emerald-400 text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5">
+                                <ShieldCheck size={10} /> Disiplin (20%)
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">Kehadiran (on-time), fokus, & ikuti instruksi.</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-amber-400 text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5">
+                                <Activity size={10} /> Fisik (20%)
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">Daya tahan (endurance), kekuatan, & kecepatan.</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-purple-400 text-[9px] font-black uppercase tracking-widest italic flex items-center gap-1.5">
+                                <Brain size={10} /> Sikap (20%)
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium leading-tight">Mentalitas, kerja sama tim, & semangat.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Hint Box */}
+            <div className="bg-blue-600/5 border border-blue-600/20 p-6 rounded-3xl flex items-center justify-between gap-6 ring-1 ring-blue-500/10">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                        <Save size={24} />
+                    </div>
+                    <div>
+                        <h4 className="text-white font-black text-sm uppercase tracking-widest italic font-black">Ingat Simpan Data</h4>
+                        <p className="text-slate-400 text-xs font-medium">Jangan lupa klik tombol <strong className="text-blue-400">&quot;Simpan&quot;</strong> di atas sebelum meninggalkan halaman ini.</p>
+                    </div>
                 </div>
             </div>
 

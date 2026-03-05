@@ -10,7 +10,9 @@ import {
     Clock,
     Plus,
     X,
-    MessageSquare
+    MessageSquare,
+    Edit2,
+    Trash2
 } from 'lucide-react'
 
 export default function CoachReportsPage() {
@@ -21,6 +23,7 @@ export default function CoachReportsPage() {
     const [isCreateMode, setIsCreateMode] = useState(false)
 
     // Form State
+    const [editingReport, setEditingReport] = useState(null)
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
 
@@ -48,34 +51,84 @@ export default function CoachReportsPage() {
         fetchReports()
     }, [])
 
-    const handleSendReport = async (e) => {
+    const handleSaveReport = async (e) => {
         e.preventDefault()
         if (!title || !content) return alert('Mohon isi judul dan konten laporan.')
 
         setSubmitting(true)
         try {
-            const { data, error } = await supabase
-                .from('coach_reports')
-                .insert([{
-                    coach_id: coachId,
-                    title,
-                    content,
-                    report_date: new Date().toISOString().split('T')[0]
-                }])
-                .select()
+            if (editingReport) {
+                // Update existing report
+                const { data, error } = await supabase
+                    .from('coach_reports')
+                    .update({
+                        title,
+                        content
+                    })
+                    .eq('id', editingReport.id)
+                    .select()
 
-            if (error) throw error
+                if (error) throw error
+                setReports(reports.map(r => r.id === editingReport.id ? data[0] : r))
+                alert('Laporan berhasil diperbarui!')
+            } else {
+                // Insert new report
+                const { data, error } = await supabase
+                    .from('coach_reports')
+                    .insert([{
+                        coach_id: coachId,
+                        title,
+                        content,
+                        report_date: new Date().toISOString().split('T')[0]
+                    }])
+                    .select()
 
-            setReports([data[0], ...reports])
-            alert('Laporan berhasil dikirim ke Admin!')
+                if (error) throw error
+                setReports([data[0], ...reports])
+                alert('Laporan berhasil dikirim ke Admin!')
+            }
+
             setIsCreateMode(false)
+            setEditingReport(null)
             setTitle('')
             setContent('')
         } catch (error) {
-            alert('Gagal mengirim laporan: ' + (error.message || 'Terjadi kesalahan'))
-            console.error('Send Report Error:', error)
+            alert('Gagal menyimpan laporan: ' + (error.message || 'Terjadi kesalahan'))
+            console.error('Save Report Error:', error)
         } finally {
             setSubmitting(false)
+        }
+    }
+
+    const handleEdit = (report) => {
+        if (report.is_reviewed) {
+            return alert('Laporan yang sudah dibaca Admin tidak dapat diubah.')
+        }
+        setEditingReport(report)
+        setTitle(report.title)
+        setContent(report.content)
+        setIsCreateMode(true)
+    }
+
+    const handleDelete = async (id) => {
+        const report = reports.find(r => r.id === id)
+        if (report?.is_reviewed) {
+            return alert('Laporan yang sudah dibaca Admin tidak dapat dihapus.')
+        }
+
+        if (!confirm('Apakah Anda yakin ingin menghapus laporan ini?')) return
+
+        try {
+            const { error } = await supabase
+                .from('coach_reports')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+            setReports(reports.filter(r => r.id !== id))
+            alert('Laporan berhasil dihapus.')
+        } catch (error) {
+            alert('Gagal menghapus laporan: ' + error.message)
         }
     }
 
@@ -109,12 +162,12 @@ export default function CoachReportsPage() {
             {isCreateMode ? (
                 <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl animate-slideUp">
                     <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                        <h2 className="text-lg font-bold text-white">Form Laporan Baru</h2>
-                        <button onClick={() => setIsCreateMode(false)} className="text-slate-500 hover:text-white transition-colors">
+                        <h2 className="text-lg font-bold text-white">{editingReport ? 'Edit Laporan' : 'Form Laporan Baru'}</h2>
+                        <button onClick={() => { setIsCreateMode(false); setEditingReport(null); setTitle(''); setContent(''); }} className="text-slate-500 hover:text-white transition-colors">
                             <X size={24} />
                         </button>
                     </div>
-                    <form onSubmit={handleSendReport} className="p-8 space-y-6">
+                    <form onSubmit={handleSaveReport} className="p-8 space-y-6">
                         <div>
                             <label className="block text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Judul Laporan</label>
                             <input
@@ -142,11 +195,11 @@ export default function CoachReportsPage() {
                                 className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                             >
                                 <Send size={20} />
-                                {submitting ? 'Mengirim...' : 'Kirim Laporan Sekarang'}
+                                {submitting ? 'Menyimpan...' : editingReport ? 'Simpan Perubahan' : 'Kirim Laporan Sekarang'}
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setIsCreateMode(false)}
+                                onClick={() => { setIsCreateMode(false); setEditingReport(null); setTitle(''); setContent(''); }}
                                 className="px-8 py-4 border border-slate-700 text-slate-400 font-bold rounded-xl hover:bg-slate-700 transition-all"
                             >
                                 Batalkan
@@ -177,11 +230,31 @@ export default function CoachReportsPage() {
                                                 Dibuat: {new Date(report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                             </p>
                                         </div>
-                                        <div className={`px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${report.is_reviewed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/50'}`}>
-                                            {report.is_reviewed ? (
-                                                <> <CheckCircle size={10} /> Sudah Dibaca </>
-                                            ) : (
-                                                <> <Clock size={10} /> Menunggu </>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${report.is_reviewed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-700/50 text-slate-400 border-slate-600/50'}`}>
+                                                {report.is_reviewed ? (
+                                                    <> <CheckCircle size={10} /> Sudah Dibaca </>
+                                                ) : (
+                                                    <> <Clock size={10} /> Menunggu </>
+                                                )}
+                                            </div>
+                                            {!report.is_reviewed && (
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleEdit(report)}
+                                                        className="p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
+                                                        title="Edit Laporan"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(report.id)}
+                                                        className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                                                        title="Hapus Laporan"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     </div>

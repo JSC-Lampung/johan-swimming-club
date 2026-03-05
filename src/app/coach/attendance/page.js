@@ -23,6 +23,7 @@ import { PROGRAMS } from '@/lib/constants'
 export default function MemberAttendancePage() {
     const [members, setMembers] = useState([])
     const [attendance, setAttendance] = useState({}) // { memberId: status }
+    const [leaveRequests, setLeaveRequests] = useState({}) // { memberId: reason }
     const [dailyScores, setDailyScores] = useState({}) // { memberId: score }
     const [dailyMetrics, setDailyMetrics] = useState({}) // { memberId: { technique: 0, discipline: 0, physical: 0, mental: 0 } }
     const [coachId, setCoachId] = useState(null)
@@ -101,6 +102,24 @@ export default function MemberAttendancePage() {
                 setAttendance(attendMap)
                 setDailyScores(scoreMap)
                 setDailyMetrics(metricsMap)
+
+                // Fetch leave requests for this date
+                let leaveQuery = supabase
+                    .from('member_leave_requests')
+                    .select('member_id, reason, member:profiles!inner(program_pilihan)')
+                    .eq('leave_date', selectedDate)
+
+                if (selectedProgram) {
+                    leaveQuery = leaveQuery.eq('member.program_pilihan', selectedProgram)
+                }
+
+                const { data: leaveData } = await leaveQuery
+
+                const leaveMap = {}
+                leaveData?.forEach(item => {
+                    leaveMap[item.member_id] = item.reason
+                })
+                setLeaveRequests(leaveMap)
 
             } catch (error) {
                 console.error('Error fetching attendance:', error)
@@ -302,8 +321,14 @@ export default function MemberAttendancePage() {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-white font-medium text-sm">{m.full_name}</span>
-                                                    {userRole === 'head_coach' && !selectedProgram && m.program_pilihan && (
-                                                        <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter italic leading-none">{m.program_pilihan}</span>
+                                                    {leaveRequests[m.id] ? (
+                                                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter italic animate-pulse">
+                                                            Izin: {leaveRequests[m.id]}
+                                                        </span>
+                                                    ) : (
+                                                        userRole === 'head_coach' && !selectedProgram && m.program_pilihan && (
+                                                            <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter italic leading-none">{m.program_pilihan}</span>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
